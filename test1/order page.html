@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>يسلمو - إنشاء طلب جديد</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #ff6b35 0%, #f08a4b 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow-x: hidden;
+            padding: 15px;
+        }
+
+        /* رسومات SVG في الخلفية */
+        .delivery-svg-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .svg-truck,
+        .svg-motorcycle,
+        .svg-package,
+        .svg-location {
+            position: absolute;
+            opacity: 0.1;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .svg-truck {
+            top: 5%;
+            left: 3%;
+            width: clamp(80px, 15vw, 150px);
+        }
+
+        .svg-motorcycle {
+            bottom: 5%;
+            right: 3%;
+            width: clamp(70px, 13vw, 130px);
+            animation: float 8s ease-in-out infinite reverse;
+        }
+
+        .svg-package {
+            top: 15%;
+            right: 5%;
+            width: clamp(60px, 10vw, 100px);
+        }
+
+        .svg-location {
+            bottom: 15%;
+            left: 5%;
+            width: clamp(70px, 12vw, 120px);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(3deg); }
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            position: relative;
+            z-index: 2;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            font-size: clamp(2rem, 10vw, 3rem);
+            color: white;
+            text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.1);
+            font-weight: 900;
+            margin-bottom: 5px;
+        }
+
+        .header .back-link {
+            color: white;
+            text-decoration: none;
+            font-size: 1rem;
+            display: inline-block;
+            margin-top: 5px;
+            opacity: 0.9;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            padding-bottom: 2px;
+        }
+
+        .header .back-link:hover {
+            opacity: 1;
+            border-bottom-color: white;
+        }
+
+        .order-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: clamp(20px, 5vw, 40px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            color: #ff6b35;
+            font-size: 1.2rem;
+            border-bottom: 2px solid #ff6b35;
+            padding-bottom: 8px;
+        }
+
+        .section-title svg {
+            width: 24px;
+            height: 24px;
+            fill: #ff6b35;
+        }
+
+        /* حقل العنوان */
+        .address-section {
+            margin-bottom: 25px;
+        }
+
+        .address-input {
+            width: 100%;
+            padding: 15px 18px;
+            font-size: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 18px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: white;
+            font-family: inherit;
+        }
+
+        .address-input:focus {
+            border-color: #ff6b35;
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.2);
+        }
+
+        .address-input::placeholder {
+            color: #aaa;
+        }
+
+        /* حقل الطلبات الموحد */
+        .orders-textarea-section {
+            margin-bottom: 25px;
+        }
+
+        .orders-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            color: #555;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .orders-label svg {
+            width: 20px;
+            height: 20px;
+            fill: #ff6b35;
+        }
+
+        .orders-textarea {
+            width: 100%;
+            padding: 18px 20px;
+            font-size: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 20px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: white;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 200px;
+            line-height: 1.8;
+            direction: rtl;
+        }
+
+        .orders-textarea:focus {
+            border-color: #ff6b35;
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.2);
+        }
+
+        .orders-textarea::placeholder {
+            color: #aaa;
+            font-size: 0.95rem;
+        }
+
+        .example-hint {
+            background: #f8f8f8;
+            padding: 12px 15px;
+            border-radius: 15px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #666;
+            border: 1px dashed #ff6b35;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .example-hint svg {
+            width: 18px;
+            height: 18px;
+            fill: #ff6b35;
+            flex-shrink: 0;
+        }
+
+        .example-hint span {
+            color: #ff6b35;
+            font-weight: 600;
+        }
+
+        /* ملاحظات إضافية */
+        .notes-section {
+            margin-bottom: 25px;
+        }
+
+        .notes-input {
+            width: 100%;
+            padding: 15px 18px;
+            font-size: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 18px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: white;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .notes-input:focus {
+            border-color: #ff6b35;
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.2);
+        }
+
+        .notes-input::placeholder {
+            color: #aaa;
+        }
+
+        /* ملخص سريع */
+        .quick-summary {
+            background: #f8f8f8;
+            padding: 15px 20px;
+            border-radius: 18px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #eee;
+        }
+
+        .summary-text {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .items-count {
+            background: #ff6b35;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        /* أزرار الإجراءات */
+        .actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary, .btn-secondary {
+            flex: 1;
+            min-width: 200px;
+            padding: 16px 20px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #ff6b35;
+            color: white;
+            box-shadow: 0 10px 20px rgba(255, 107, 53, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: #f05a28;
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(255, 107, 53, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #ff6b35;
+            border: 2px solid #ff6b35;
+        }
+
+        .btn-secondary:hover {
+            background: #fff8f0;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary:active {
+            transform: translateY(0);
+        }
+
+        /* تحسينات للشاشات الصغيرة */
+        @media (max-width: 480px) {
+            .order-card {
+                padding: 20px;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .btn-primary, .btn-secondary {
+                width: 100%;
+                min-width: auto;
+            }
+
+            .orders-textarea {
+                min-height: 250px;
+            }
+        }
+
+        /* تحسينات للأجهزة اللمسية */
+        @media (hover: none) and (pointer: coarse) {
+            .btn-primary:hover,
+            .btn-secondary:hover {
+                transform: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- رسومات SVG في الخلفية -->
+    <div class="delivery-svg-bg">
+        <div class="svg-truck">
+            <svg viewBox="0 0 24 24" fill="white">
+                <path d="M18 18.5C18 19.6 17.1 20.5 16 20.5C14.9 20.5 14 19.6 14 18.5C14 17.4 14.9 16.5 16 16.5C17.1 16.5 18 17.4 18 18.5ZM6 18.5C6 19.6 5.1 20.5 4 20.5C2.9 20.5 2 19.6 2 18.5C2 17.4 2.9 16.5 4 16.5C5.1 16.5 6 17.4 6 18.5ZM20 4V6H22V8H20V10H18V8H16V6H18V4H20ZM6.5 7H10.5V9H8V13H6.5V7Z"/>
+            </svg>
+        </div>
+        <div class="svg-motorcycle">
+            <svg viewBox="0 0 24 24" fill="white">
+                <path d="M8.5 19C8.5 20.1 7.6 21 6.5 21C5.4 21 4.5 20.1 4.5 19C4.5 17.9 5.4 17 6.5 17C7.6 17 8.5 17.9 8.5 19ZM17.5 17C16.4 17 15.5 17.9 15.5 19C15.5 20.1 16.4 21 17.5 21C18.6 21 19.5 20.1 19.5 19C19.5 17.9 18.6 17 17.5 17ZM5.5 12L7.5 8H11.5V6H6.5L4 12H5.5ZM19.5 12C18.7 12 17.9 12.2 17.2 12.6L14.9 9.5L18.5 4H14.5L11.7 8.4L13.5 11C12.3 12 11.5 13.4 11.5 15V16H18.5C20.4 16 22 14.4 22 12.5V12H19.5Z"/>
+            </svg>
+        </div>
+        <div class="svg-package">
+            <svg viewBox="0 0 24 24" fill="white">
+                <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM19 19H5V5H19V19ZM13 7H7V9H13V7ZM17 11H7V13H17V11Z"/>
+            </svg>
+        </div>
+        <div class="svg-location">
+            <svg viewBox="0 0 24 24" fill="white">
+                <path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2ZM12 11.5C10.62 11.5 9.5 10.38 9.5 9C9.5 7.62 10.62 6.5 12 6.5C13.38 6.5 14.5 7.62 14.5 9C14.5 10.38 13.38 11.5 12 11.5Z"/>
+            </svg>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>يسلمو</h1>
+            <a href="#" class="back-link" onclick="goBack(); return false;">← الرجوع للرئيسية</a>
+        </div>
+
+        <div class="order-card">
+            <!-- حقل العنوان -->
+            <div class="address-section">
+                <div class="section-title">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                    </svg>
+                    <span>عنوان التوصيل</span>
+                </div>
+                <input type="text" class="address-input" id="address" placeholder="أدخل عنوان التوصيل بالتفصيل (المنطقة، الشارع، رقم المبنى)" value="الرياض - حي النرجس - شارع ابن سينا">
+            </div>
+
+            <!-- حقل الطلبات الموحد (textarea) -->
+            <div class="orders-textarea-section">
+                <div class="section-title">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 7h10v2H7V7zm0 4h10v2H7v-2zm0 4h10v2H7v-2z"/>
+                    </svg>
+                    <span>الطلبات المرادة</span>
+                </div>
+                
+                <div class="orders-label">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                    </svg>
+                    اكتب طلباتك هنا (لكل طلب سطر منفصل)
+                </div>
+
+                <textarea class="orders-textarea" id="orders" placeholder="مثال:
+بيتزا عائلية - 2
+مشروب غازي - 3
+بطاطس مقلية كبيرة - 1
+سلطة سيزر - 1
+خبز ثوم - 2">بيتزا عائلية - 2
+مشروب غازي - 3
+بطاطس مقلية كبيرة - 1
+سلطة سيزر - 1</textarea>
+
+                <div class="example-hint">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                    </svg>
+                    <span>نصيحة:</span> اكتب كل طلب في سطر منفصل، واستخدم شرطة (-) أو فاصلة (،) للفصل بين اسم الصنف والكمية
+                </div>
+            </div>
+
+            <!-- ملاحظات إضافية -->
+            <div class="notes-section">
+                <div class="section-title">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M21 6h-7.59l3.29-3.29L16 2l-4 4-4-4-.71.71L10.59 6H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 14H3V8h18v12zM9 10v6l5-3-5-3z"/>
+                    </svg>
+                    <span>ملاحظات إضافية</span>
+                </div>
+                <textarea class="notes-input" id="notes" placeholder="أي ملاحظات إضافية (اختياري) مثل: يرجى الاتصال قبل الوصول، بوابة 3، etc...">يرجى الاتصال عند الوصول</textarea>
+            </div>
+
+            <!-- ملخص سريع -->
+            <div class="quick-summary">
+                <span class="summary-text">عدد الأصناف المكتوبة</span>
+                <span class="items-count" id="itemsCount">4 أصناف</span>
+            </div>
+
+            <!-- أزرار الإجراءات -->
+            <div class="actions">
+                <button class="btn-secondary" onclick="clearForm()">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="#ff6b35">
+                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                    </svg>
+                    تفريغ الحقول
+                </button>
+                <button class="btn-primary" onclick="submitOrder()">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="white">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                    </svg>
+                    تأكيد الطلب
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateItemsCount() {
+            const ordersText = document.getElementById('orders').value;
+            const lines = ordersText.split('\n').filter(line => line.trim() !== '');
+            const count = lines.length;
+            const itemsCountSpan = document.getElementById('itemsCount');
+            
+            if (count === 0) {
+                itemsCountSpan.textContent = 'لا توجد أصناف';
+            } else if (count === 1) {
+                itemsCountSpan.textContent = 'صنف واحد';
+            } else if (count === 2) {
+                itemsCountSpan.textContent = 'صنفان';
+            } else {
+                itemsCountSpan.textContent = count + ' أصناف';
+            }
+        }
+
+        function parseOrders(ordersText) {
+            const lines = ordersText.split('\n').filter(line => line.trim() !== '');
+            const items = [];
+            
+            lines.forEach(line => {
+                // محاولة استخراج الكمية من النص
+                let quantity = 1;
+                let itemName = line.trim();
+                
+                // البحث عن أنماط مختلفة للفصل بين الاسم والكمية
+                const patterns = [
+                    { separator: '-', index: line.indexOf('-') },
+                    { separator: '—', index: line.indexOf('—') },
+                    { separator: ':', index: line.indexOf(':') },
+                    { separator: '،', index: line.indexOf('،') },
+                    { separator: ',', index: line.indexOf(',') },
+                    { separator: ' ', index: line.lastIndexOf(' ') } // المسافة الأخيرة
+                ];
+                
+                // ترتيب الأنماط حسب أولوية الظهور
+                patterns.sort((a, b) => {
+                    if (a.index === -1) return 1;
+                    if (b.index === -1) return -1;
+                    return a.index - b.index;
+                });
+                
+                const separatorPattern = patterns.find(p => p.index !== -1);
+                
+                if (separatorPattern && separatorPattern.index > 0 && separatorPattern.index < line.length - 1) {
+                    itemName = line.substring(0, separatorPattern.index).trim();
+                    const quantityStr = line.substring(separatorPattern.index + 1).trim();
+                    const parsedQuantity = parseInt(quantityStr);
+                    if (!isNaN(parsedQuantity) && parsedQuantity > 0) {
+                        quantity = parsedQuantity;
+                    }
+                }
+                
+                items.push({
+                    name: itemName || 'صنف غير مسمى',
+                    quantity: quantity
+                });
+            });
+            
+            return items;
+        }
+
+        function submitOrder() {
+            const address = document.getElementById('address').value.trim();
+            const ordersText = document.getElementById('orders').value.trim();
+            const notes = document.getElementById('notes').value.trim();
+            
+            if (!address) {
+                alert('الرجاء إدخال عنوان التوصيل');
+                return;
+            }
+            
+            if (!ordersText) {
+                alert('الرجاء إدخال الطلبات المطلوبة');
+                return;
+            }
+            
+            const items = parseOrders(ordersText);
+            
+            if (items.length === 0) {
+                alert('الرجاء إدخال صنف واحد على الأقل');
+                return;
+            }
+            
+            // تجهيز بيانات الطلب
+            const orderData = {
+                address: address,
+                rawOrders: ordersText,
+                parsedItems: items,
+                notes: notes,
+                totalItems: items.length,
+                totalQuantity: items.reduce((sum, item) => sum + item.quantity, 0),
+                timestamp: new Date().toISOString()
+            };
+            
+            console.log('Order submitted:', orderData);
+            
+            // عرض ملخص الطلب للمستخدم
+            let itemsSummary = 'طلباتك:\n';
+            items.forEach(item => {
+                itemsSummary += `• ${item.name} (${item.quantity})\n`;
+            });
+            
+            alert(`✅ تم تأكيد الطلب بنجاح!\n\nالعنوان: ${address}\n${itemsSummary}\nرقم الطلب: ${Math.floor(Math.random() * 10000)}`);
+            
+            // هنا يمكن إرسال البيانات إلى الخادم
+            // window.location.href = '/order-confirmation';
+        }
+
+        function clearForm() {
+            if (confirm('هل أنت متأكد من تفريغ جميع الحقول؟')) {
+                document.getElementById('address').value = '';
+                document.getElementById('orders').value = '';
+                document.getElementById('notes').value = '';
+                updateItemsCount();
+            }
+        }
+
+        function goBack() {
+            window.location.href = '#'; // غير هذا الرابط لصفحة الرئيسية الفعلية
+        }
+
+        // تحديث عدد الأصناف عند الكتابة في حقل الطلبات
+        document.addEventListener('DOMContentLoaded', function() {
+            const ordersTextarea = document.getElementById('orders');
+            ordersTextarea.addEventListener('input', updateItemsCount);
+            updateItemsCount(); // تحديث أولي
+        });
+    </script>
+</body>
+</html>
