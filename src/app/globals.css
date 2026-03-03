@@ -1,6 +1,6 @@
 /* ============================================
    يسلمو - Yaslamo Delivery Website
-   Global Design System
+   White Background - Mobile First Design System
    ============================================ */
 
 /* Reset & Base */
@@ -13,37 +13,31 @@
 :root {
   --primary: #ff6b35;
   --primary-dark: #f05a28;
-  --primary-light: #f08a4b;
-  --primary-glow: rgba(255, 107, 53, 0.3);
-  --bg-gradient: linear-gradient(135deg, #ff6b35 0%, #f08a4b 100%);
+  --primary-light: #fff3ed;
+  --primary-glow: rgba(255, 107, 53, 0.15);
   --white: #ffffff;
-  --white-90: rgba(255, 255, 255, 0.9);
-  --white-80: rgba(255, 255, 255, 0.8);
-  --white-50: rgba(255, 255, 255, 0.5);
-  --white-25: rgba(255, 255, 255, 0.25);
-  --white-15: rgba(255, 255, 255, 0.15);
-  --card-bg: rgba(255, 255, 255, 0.95);
-  --text-dark: #333;
-  --text-mid: #555;
-  --text-light: #666;
+  --text-dark: #1a1a2e;
+  --text-mid: #444;
+  --text-light: #777;
   --text-muted: #aaa;
-  --border: #e0e0e0;
-  --border-light: #eee;
-  --bg-light: #f8f8f8;
-  --radius-sm: 15px;
-  --radius-md: 18px;
+  --border: #e8e8e8;
+  --border-light: #f0f0f0;
+  --bg-page: #ffffff;
+  --bg-section: #fafafa;
+  --bg-light: #f5f5f5;
+  --radius-sm: 12px;
+  --radius-md: 16px;
   --radius-lg: 20px;
-  --radius-xl: 30px;
+  --radius-xl: 24px;
   --radius-full: 50px;
-  --shadow-sm: 0 5px 15px rgba(255, 107, 53, 0.2);
-  --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.2);
-  --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.2);
-  --shadow-btn: 0 10px 20px rgba(255, 107, 53, 0.3);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --shadow-btn: 0 6px 20px rgba(255, 107, 53, 0.25);
 }
 
 body {
   font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: var(--bg-gradient);
+  background: var(--bg-page);
   min-height: 100vh;
   overflow-x: hidden;
   color: var(--text-dark);
@@ -56,82 +50,12 @@ a {
 }
 
 /* ============================================
-   SVG Background Decorations
-   ============================================ */
-.svg-bg-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.svg-bg-item {
-  position: absolute;
-  opacity: 0.1;
-  animation: float 6s ease-in-out infinite;
-}
-
-.svg-bg-truck {
-  top: 5%;
-  left: 3%;
-  width: clamp(80px, 15vw, 150px);
-}
-
-.svg-bg-motorcycle {
-  bottom: 5%;
-  right: 3%;
-  width: clamp(70px, 13vw, 130px);
-  animation: float 8s ease-in-out infinite reverse;
-}
-
-.svg-bg-package {
-  top: 15%;
-  right: 5%;
-  width: clamp(60px, 10vw, 100px);
-}
-
-.svg-bg-location {
-  bottom: 15%;
-  left: 5%;
-  width: clamp(70px, 12vw, 120px);
-}
-
-.svg-bg-food {
-  top: 50%;
-  right: 15%;
-  width: clamp(50px, 8vw, 90px);
-  animation: float 7s ease-in-out infinite;
-}
-
-.svg-bg-clock {
-  top: 40%;
-  left: 10%;
-  width: clamp(50px, 8vw, 80px);
-  animation: float 9s ease-in-out infinite reverse;
-}
-
-/* ============================================
    Animations
    ============================================ */
-@keyframes float {
-
-  0%,
-  100% {
-    transform: translateY(0) rotate(0deg);
-  }
-
-  50% {
-    transform: translateY(-15px) rotate(3deg);
-  }
-}
-
 @keyframes slideDown {
   from {
     opacity: 0;
-    transform: translateY(-30px);
+    transform: translateY(-20px);
   }
 
   to {
@@ -143,7 +67,7 @@ a {
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(30px);
+    transform: translateY(20px);
   }
 
   to {
@@ -165,7 +89,7 @@ a {
 @keyframes scaleIn {
   from {
     opacity: 0;
-    transform: scale(0.9);
+    transform: scale(0.95);
   }
 
   to {
@@ -196,7 +120,7 @@ a {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 15px;
+  width: 100%;
 }
 
 .page-wrapper.center-content {
@@ -204,228 +128,327 @@ a {
 }
 
 /* ============================================
-   Logo & Header
+   Top Navbar / Header Bar
    ============================================ */
-.logo-container {
-  text-align: center;
-  margin-bottom: clamp(15px, 4vh, 30px);
-  animation: slideDown 1s ease-out;
+.top-bar {
+  width: 100%;
+  background: var(--primary);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 2px 10px rgba(255, 107, 53, 0.2);
 }
 
-.logo-image {
-  width: clamp(100px, 25vw, 180px);
-  height: clamp(100px, 25vw, 180px);
-  border-radius: 25px;
+.top-bar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: white;
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.top-bar-logo img {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   object-fit: cover;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-  margin-bottom: 10px;
 }
 
-.logo-title {
-  font-size: clamp(2.5rem, 12vw, 5rem);
-  color: var(--white);
-  text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.1);
-  font-weight: 900;
-  margin-bottom: 5px;
-  letter-spacing: 2px;
-  line-height: 1.2;
+.top-bar-back {
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.9rem;
+  opacity: 0.9;
+  transition: opacity 0.2s;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
 }
 
-.logo-subtitle {
-  font-size: clamp(0.8rem, 4vw, 1.3rem);
-  color: var(--white-90);
-  display: block;
-  letter-spacing: 3px;
-  font-weight: 300;
+.top-bar-back:hover {
+  opacity: 1;
 }
 
-.page-header {
+/* ============================================
+   Hero Section (Home Page)
+   ============================================ */
+.hero-section {
+  width: 100%;
+  background: var(--primary);
+  padding: 40px 20px 50px;
   text-align: center;
-  margin-bottom: 25px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-section::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  background: var(--bg-page);
+  border-radius: 30px 30px 0 0;
+}
+
+.hero-logo {
+  width: clamp(80px, 20vw, 130px);
+  height: clamp(80px, 20vw, 130px);
+  border-radius: 22px;
+  object-fit: cover;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  margin-bottom: 15px;
   animation: slideDown 0.8s ease-out;
 }
 
-.page-header h1 {
-  font-size: clamp(2rem, 10vw, 3rem);
-  color: var(--white);
-  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.1);
-  font-weight: 900;
-  margin-bottom: 5px;
+.hero-title {
+  font-size: clamp(1.3rem, 5vw, 2.2rem);
+  color: white;
+  font-weight: 700;
+  margin-bottom: 8px;
+  animation: slideUp 0.8s ease-out 0.2s both;
+  line-height: 1.4;
 }
 
-.back-link {
-  color: var(--white);
-  font-size: 1rem;
+.hero-desc {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: clamp(0.85rem, 3.5vw, 1.1rem);
+  max-width: 500px;
+  margin: 0 auto;
+  line-height: 1.7;
+  animation: slideUp 0.8s ease-out 0.4s both;
+}
+
+/* ============================================
+   Welcome User Bar (inside hero)
+   ============================================ */
+.welcome-bar {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  margin-top: 8px;
-  opacity: 0.9;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-  padding-bottom: 2px;
-  transition: opacity 0.2s, border-color 0.2s;
-}
-
-.back-link:hover {
-  opacity: 1;
-  border-bottom-color: var(--white);
-}
-
-/* ============================================
-   Slogan & Description
-   ============================================ */
-.slogan {
-  font-size: clamp(1.2rem, 6vw, 2.5rem);
-  color: var(--white);
-  margin-bottom: clamp(10px, 3vh, 20px);
-  font-weight: 700;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-  animation: slideUp 1s ease-out 0.3s both;
-  line-height: 1.4;
-  text-align: center;
-}
-
-.description {
-  color: rgba(255, 255, 255, 0.95);
-  font-size: clamp(0.9rem, 4vw, 1.3rem);
-  margin-bottom: clamp(20px, 5vh, 50px);
-  line-height: 1.8;
-  max-width: 700px;
-  margin-left: auto;
-  margin-right: auto;
-  text-align: center;
-  animation: slideUp 1s ease-out 0.5s both;
-}
-
-/* ============================================
-   Feature Cards
-   ============================================ */
-.features-grid {
-  display: flex;
-  justify-content: center;
-  gap: clamp(10px, 3vw, 50px);
-  margin-bottom: clamp(20px, 5vh, 50px);
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: var(--radius-full);
+  padding: 8px 20px;
+  margin-bottom: 15px;
+  animation: slideDown 0.6s ease-out;
   flex-wrap: wrap;
-  animation: slideUp 1s ease-out 0.7s both;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.welcome-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.welcome-avatar svg {
+  width: 16px;
+  height: 16px;
+}
+
+.welcome-name {
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.welcome-actions a,
+.welcome-actions button {
+  color: white;
+  font-size: 0.75rem;
+  opacity: 0.8;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 2px 6px;
+}
+
+.welcome-actions a:hover,
+.welcome-actions button:hover {
+  opacity: 1;
+}
+
+/* ============================================
+   Content Area
+   ============================================ */
+.content-area {
+  width: 100%;
+  max-width: 600px;
+  padding: 0 16px;
+  margin: 0 auto;
+}
+
+.content-area-wide {
+  max-width: 750px;
+}
+
+/* ============================================
+   Feature Cards (Home)
+   ============================================ */
+.features-section {
+  padding: 30px 16px 10px;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
 }
 
 .feature-card {
   text-align: center;
-  padding: clamp(12px, 3vw, 25px);
-  background: var(--white-15);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: var(--radius-lg);
-  width: clamp(130px, 28vw, 200px);
-  transition: transform 0.3s ease, background 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 20px 10px;
+  background: var(--bg-page);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
+  animation: slideUp 0.6s ease-out both;
+}
+
+.feature-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.feature-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.feature-card:nth-child(3) {
+  animation-delay: 0.3s;
 }
 
 .feature-card:hover {
-  transform: translateY(-8px);
-  background: var(--white-25);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-3px);
 }
 
 .feature-icon {
-  width: clamp(45px, 12vw, 80px);
-  height: clamp(45px, 12vw, 80px);
-  margin: 0 auto clamp(8px, 2vh, 15px);
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 10px;
+  background: var(--primary-light);
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px;
 }
 
 .feature-icon svg {
-  width: 100%;
-  height: 100%;
-  filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.2));
+  width: 24px;
+  height: 24px;
+  fill: var(--primary);
 }
 
 .feature-text {
-  color: var(--white);
-  font-size: clamp(0.85rem, 3.5vw, 1.2rem);
+  color: var(--text-dark);
+  font-size: clamp(0.75rem, 3vw, 0.95rem);
   font-weight: 600;
   line-height: 1.4;
 }
 
 /* ============================================
-   CTA Button
+   CTA Buttons Section (Home)
    ============================================ */
+.cta-section {
+  padding: 20px 16px 10px;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .btn-cta {
-  background: var(--white);
-  color: var(--primary);
+  background: var(--primary);
+  color: var(--white);
   border: none;
-  padding: clamp(14px, 3vh, 22px) clamp(35px, 8vw, 65px);
-  font-size: clamp(1.1rem, 5vw, 1.8rem);
-  border-radius: var(--radius-full);
+  padding: 16px 30px;
+  font-size: 1.1rem;
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-btn);
   font-weight: 700;
   font-family: inherit;
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
+  width: 100%;
   -webkit-tap-highlight-color: transparent;
-  animation: slideUp 1s ease-out 0.9s both;
+  animation: slideUp 0.6s ease-out 0.5s both;
 }
 
 .btn-cta:hover {
-  background: #fff8f0;
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(255, 107, 53, 0.3);
 }
 
 .btn-cta:active {
   transform: scale(0.98);
-  background: #f5f5f5;
 }
 
 .btn-cta svg {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
+}
+
+.btn-cta-outline {
+  background: transparent;
+  color: var(--primary);
+  border: 2px solid var(--primary);
+  box-shadow: none;
+  animation-delay: 0.6s;
+}
+
+.btn-cta-outline:hover {
+  background: var(--primary-light);
+  transform: translateY(-2px);
+  box-shadow: none;
 }
 
 /* ============================================
-   Card / Form Container
-   ============================================ */
-.card {
-  background: var(--card-bg);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: var(--radius-xl);
-  padding: clamp(20px, 5vw, 40px);
-  box-shadow: var(--shadow-lg);
-  animation: slideUp 0.5s ease-out;
-  width: 100%;
-  max-width: 650px;
-}
-
-.card-wide {
-  max-width: 800px;
-}
-
-/* ============================================
-   Section Titles (inside cards)
+   Section Titles
    ============================================ */
 .section-title {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 15px;
+  margin-bottom: 14px;
   color: var(--primary);
-  font-size: 1.2rem;
+  font-size: 1.05rem;
   font-weight: 700;
-  border-bottom: 2px solid var(--primary);
-  padding-bottom: 8px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--border-light);
 }
 
 .section-title svg {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   fill: var(--primary);
   flex-shrink: 0;
 }
@@ -433,36 +456,45 @@ a {
 /* ============================================
    Form Elements
    ============================================ */
+.form-section {
+  padding: 25px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.form-section:last-of-type {
+  border-bottom: none;
+}
+
 .form-group {
-  margin-bottom: 25px;
+  margin-bottom: 20px;
 }
 
 .form-label {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   color: var(--text-mid);
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 
 .form-label svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   fill: var(--primary);
 }
 
 .form-input,
 .form-textarea {
   width: 100%;
-  padding: 15px 18px;
+  padding: 14px 16px;
   font-size: 1rem;
-  border: 2px solid var(--border);
-  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
   outline: none;
   transition: all 0.3s ease;
-  background: var(--white);
+  background: var(--bg-page);
   font-family: inherit;
   color: var(--text-dark);
 }
@@ -470,39 +502,41 @@ a {
 .form-input:focus,
 .form-textarea:focus {
   border-color: var(--primary);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
 .form-input::placeholder,
 .form-textarea::placeholder {
   color: var(--text-muted);
+  font-size: 0.9rem;
 }
 
 .form-textarea {
   resize: vertical;
-  min-height: 200px;
+  min-height: 160px;
   line-height: 1.8;
   direction: rtl;
 }
 
 .form-hint {
-  background: var(--bg-light);
-  padding: 12px 15px;
+  background: var(--primary-light);
+  padding: 10px 14px;
   border-radius: var(--radius-sm);
   margin-top: 10px;
-  font-size: 0.9rem;
-  color: var(--text-light);
-  border: 1px dashed var(--primary);
+  font-size: 0.82rem;
+  color: var(--text-mid);
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: flex-start;
+  gap: 8px;
+  border: 1px solid rgba(255, 107, 53, 0.12);
 }
 
 .form-hint svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   fill: var(--primary);
   flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .form-hint span {
@@ -514,10 +548,10 @@ a {
    Quick Summary Badge
    ============================================ */
 .quick-summary {
-  background: var(--bg-light);
-  padding: 15px 20px;
-  border-radius: var(--radius-md);
-  margin-bottom: 25px;
+  background: var(--bg-section);
+  padding: 14px 18px;
+  border-radius: var(--radius-sm);
+  margin: 20px 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -526,16 +560,16 @@ a {
 
 .summary-text {
   color: var(--text-light);
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 
 .items-badge {
   background: var(--primary);
   color: var(--white);
-  padding: 5px 18px;
+  padding: 4px 14px;
   border-radius: var(--radius-full);
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: 0.9rem;
 }
 
 /* ============================================
@@ -543,17 +577,16 @@ a {
    ============================================ */
 .actions-row {
   display: flex;
-  gap: 15px;
-  flex-wrap: wrap;
+  gap: 12px;
+  padding: 20px 0 10px;
 }
 
 .btn {
   flex: 1;
-  min-width: 200px;
-  padding: 16px 24px;
+  padding: 14px 20px;
   border: none;
-  border-radius: var(--radius-full);
-  font-size: 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -566,8 +599,8 @@ a {
 }
 
 .btn svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 }
 
 .btn-primary {
@@ -579,7 +612,6 @@ a {
 .btn-primary:hover {
   background: var(--primary-dark);
   transform: translateY(-2px);
-  box-shadow: 0 15px 30px rgba(255, 107, 53, 0.4);
 }
 
 .btn-primary:active {
@@ -587,14 +619,14 @@ a {
 }
 
 .btn-secondary {
-  background: var(--white);
+  background: var(--bg-section);
   color: var(--primary);
-  border: 2px solid var(--primary);
+  border: 1.5px solid var(--border);
 }
 
 .btn-secondary:hover {
-  background: #fff8f0;
-  transform: translateY(-2px);
+  background: var(--primary-light);
+  border-color: var(--primary);
 }
 
 .btn-secondary:active {
@@ -604,25 +636,25 @@ a {
 .btn-whatsapp {
   background: #25d366;
   color: var(--white);
-  box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3);
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.25);
 }
 
 .btn-whatsapp:hover {
   background: #1ebe5d;
   transform: translateY(-2px);
-  box-shadow: 0 15px 30px rgba(37, 211, 102, 0.4);
 }
 
 /* ============================================
    Footer
    ============================================ */
 .footer {
-  margin-top: clamp(20px, 4vh, 50px);
-  padding: 20px;
-  color: var(--white-80);
-  font-size: clamp(0.75rem, 3vw, 1rem);
+  width: 100%;
+  padding: 25px 16px;
+  color: var(--text-light);
+  font-size: 0.8rem;
   text-align: center;
-  animation: fadeIn 1s ease-out 1.1s both;
+  border-top: 1px solid var(--border-light);
+  margin-top: 20px;
 }
 
 .footer-links {
@@ -630,22 +662,21 @@ a {
   justify-content: center;
   gap: 10px;
   flex-wrap: wrap;
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .footer-links a {
-  color: var(--white);
-  border-bottom: 1px solid transparent;
-  transition: border-color 0.2s ease;
-  padding: 2px 0;
+  color: var(--primary);
+  font-weight: 600;
+  transition: opacity 0.2s;
 }
 
 .footer-links a:hover {
-  border-bottom-color: var(--white);
+  opacity: 0.7;
 }
 
 .footer-divider {
-  color: var(--white-50);
+  color: var(--border);
 }
 
 /* ============================================
@@ -655,13 +686,13 @@ a {
   display: flex;
   flex-direction: column;
   gap: 0;
-  margin: 25px 0;
+  margin: 20px 0;
 }
 
 .track-step {
   display: flex;
   align-items: flex-start;
-  gap: 15px;
+  gap: 14px;
   position: relative;
 }
 
@@ -673,8 +704,8 @@ a {
 }
 
 .step-circle {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   background: var(--border);
   display: flex;
@@ -685,21 +716,21 @@ a {
 }
 
 .step-circle svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   fill: var(--white);
 }
 
 .step-line {
-  width: 3px;
-  height: 40px;
+  width: 2px;
+  height: 35px;
   background: var(--border);
   transition: background 0.3s ease;
 }
 
 .track-step.active .step-circle {
   background: var(--primary);
-  box-shadow: 0 0 20px var(--primary-glow);
+  box-shadow: 0 0 15px var(--primary-glow);
   animation: pulse 2s infinite;
 }
 
@@ -713,18 +744,18 @@ a {
 }
 
 .step-content {
-  padding: 5px 0 25px;
+  padding: 4px 0 22px;
 }
 
 .step-title {
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: var(--text-dark);
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .step-desc {
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   color: var(--text-light);
 }
 
@@ -736,34 +767,42 @@ a {
    Content Pages (Terms, Privacy)
    ============================================ */
 .content-page {
-  max-width: 800px;
-  width: 100%;
-  padding: 40px 20px;
+  padding: 25px 0;
 }
 
 .content-page h2 {
-  color: var(--primary);
-  font-size: 1.4rem;
-  margin: 25px 0 12px;
+  color: var(--text-dark);
+  font-size: 1.15rem;
+  margin: 22px 0 10px;
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.content-page h2::before {
+  content: '';
+  width: 4px;
+  height: 22px;
+  background: var(--primary);
+  border-radius: 2px;
+  flex-shrink: 0;
 }
 
 .content-page p,
 .content-page li {
   color: var(--text-mid);
   line-height: 1.9;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+  font-size: 0.92rem;
 }
 
 .content-page ul {
-  padding-right: 25px;
-  margin-bottom: 15px;
+  padding-right: 22px;
+  margin-bottom: 12px;
 }
 
 /* ============================================
-   Success Modal / Alert
+   Success Modal
    ============================================ */
 .modal-overlay {
   position: fixed;
@@ -771,106 +810,156 @@ a {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
   animation: fadeIn 0.3s ease;
+  padding: 16px;
 }
 
 .modal-box {
   background: var(--white);
   border-radius: var(--radius-xl);
-  padding: 40px;
+  padding: 35px 25px;
   text-align: center;
-  max-width: 400px;
-  width: 90%;
+  max-width: 380px;
+  width: 100%;
   animation: scaleIn 0.3s ease;
 }
 
 .modal-icon {
-  width: 80px;
-  height: 80px;
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
   background: #4caf50;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 20px;
+  margin: 0 auto 18px;
 }
 
 .modal-icon svg {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   fill: var(--white);
 }
 
 .modal-title {
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: 700;
   color: var(--text-dark);
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .modal-text {
   color: var(--text-light);
-  margin-bottom: 25px;
-  line-height: 1.8;
+  margin-bottom: 20px;
+  line-height: 1.7;
+  font-size: 0.9rem;
 }
 
 .modal-order-number {
-  background: var(--bg-light);
-  padding: 10px 20px;
+  background: var(--primary-light);
+  padding: 8px 18px;
   border-radius: var(--radius-sm);
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: var(--primary);
-  margin-bottom: 20px;
+  margin-bottom: 18px;
   display: inline-block;
 }
 
 /* ============================================
-   Responsive Tweaks
+   Info Banner (account pre-fill)
+   ============================================ */
+.info-banner {
+  background: #f0f9f0;
+  border: 1px solid #c8e6c9;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+}
+
+.info-banner svg {
+  width: 18px;
+  height: 18px;
+  fill: #4caf50;
+  flex-shrink: 0;
+}
+
+.info-banner-text {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.info-banner-link {
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 0.82rem;
+  margin-right: auto;
+}
+
+/* ============================================
+   Responsive - Mobile First
    ============================================ */
 @media (max-width: 480px) {
   .actions-row {
     flex-direction: column;
+    gap: 10px;
   }
 
   .btn {
     width: 100%;
-    min-width: auto;
   }
 
   .form-textarea {
-    min-height: 250px;
+    min-height: 180px;
   }
 
-  .feature-card {
-    width: calc(50% - 10px);
-    min-width: 120px;
+  .hero-section {
+    padding: 30px 16px 40px;
   }
 
   .features-grid {
     gap: 8px;
   }
-}
 
-@media (min-width: 768px) and (max-width: 1024px) {
   .feature-card {
-    width: 170px;
+    padding: 15px 8px;
   }
 }
 
-@media (min-width: 1400px) {
+@media (min-width: 768px) {
+  .hero-section {
+    padding: 50px 30px 60px;
+  }
+
+  .features-section,
+  .cta-section,
+  .content-area {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
   .feature-card {
-    width: 220px;
+    padding: 25px 15px;
   }
 
   .feature-icon {
-    width: 100px;
-    height: 100px;
+    width: 56px;
+    height: 56px;
+  }
+
+  .feature-icon svg {
+    width: 28px;
+    height: 28px;
   }
 }
 
@@ -884,8 +973,8 @@ a {
     transform: none;
   }
 
-  .btn-cta:active {
-    background: #fff8f0;
+  .btn-cta:active,
+  .btn-primary:active {
     transform: scale(0.98);
   }
 }
