@@ -63,16 +63,48 @@ export default function CreateOrder() {
         });
     }
 
-    function submitOrder() {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState("");
+
+    async function submitOrder() {
         if (!userName.trim()) { alert("الرجاء إدخال اسمك"); return; }
         if (!userPhone.trim()) { alert("الرجاء إدخال رقم الهاتف"); return; }
         if (!address.trim()) { alert("الرجاء إدخال عنوان التوصيل"); return; }
         if (!orders.trim()) { alert("الرجاء إدخال الطلبات المطلوبة"); return; }
         const items = parseOrders(orders);
         if (items.length === 0) { alert("الرجاء إدخال صنف واحد على الأقل"); return; }
-        const num = Math.floor(Math.random() * 90000) + 10000;
-        setOrderNumber(num.toString());
-        setShowSuccess(true);
+
+        setIsSubmitting(true);
+        setSubmitError("");
+
+        try {
+            const res = await fetch("/api/orders", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    customerName: userName.trim(),
+                    customerPhone: userPhone.trim(),
+                    customerAddress: address.trim(),
+                    items,
+                    notes: notes.trim(),
+                }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                setSubmitError(data.error || "حدث خطأ في تقديم الطلب");
+                setIsSubmitting(false);
+                return;
+            }
+
+            setOrderNumber(data.order.orderNumber);
+            setShowSuccess(true);
+        } catch (error) {
+            setSubmitError("تعذر الاتصال بالخادم. تأكد من اتصالك بالإنترنت.");
+        } finally {
+            setIsSubmitting(false);
+        }
     }
 
     function sendWhatsApp() {
@@ -228,19 +260,36 @@ export default function CreateOrder() {
                         <span className="items-badge">{getItemsCountText()}</span>
                     </div>
 
+                    {submitError && (
+                        <div style={{
+                            background: "#fff0f0", border: "1px solid #ffcdd2", borderRadius: "12px",
+                            padding: "12px 16px", marginBottom: "20px", color: "#c62828", fontSize: "0.9rem",
+                            display: "flex", alignItems: "center", gap: "8px",
+                        }}>
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="#c62828">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                            </svg>
+                            {submitError}
+                        </div>
+                    )}
+
                     {/* Actions */}
                     <div className="actions-row">
-                        <button className="btn btn-secondary" onClick={clearForm}>
+                        <button className="btn btn-secondary" onClick={clearForm} disabled={isSubmitting}>
                             <svg viewBox="0 0 24 24" fill="#ff6b35">
                                 <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
                             </svg>
                             تفريغ
                         </button>
-                        <button className="btn btn-primary" onClick={submitOrder}>
-                            <svg viewBox="0 0 24 24" fill="white">
-                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
-                            </svg>
-                            تأكيد الطلب
+                        <button className="btn btn-primary" onClick={submitOrder} disabled={isSubmitting} style={{ opacity: isSubmitting ? 0.7 : 1 }}>
+                            {isSubmitting ? "جاري الإرسال..." : (
+                                <>
+                                    <svg viewBox="0 0 24 24" fill="white">
+                                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                                    </svg>
+                                    تأكيد الطلب
+                                </>
+                            )}
                         </button>
                     </div>
                 </div>

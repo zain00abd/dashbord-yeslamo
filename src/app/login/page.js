@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 export default function Login() {
     const router = useRouter();
@@ -21,6 +23,11 @@ export default function Login() {
 
         setLoading(true);
         try {
+            // 1. Derive email and sign in via Firebase Auth (password checked here)
+            const email = `${phone.trim().replace(/\s/g, "")}@yaslamo.app`;
+            await signInWithEmailAndPassword(auth, email, password);
+
+            // 2. Fetch Firestore profile from our API route
             const res = await fetch("/api/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -39,10 +46,18 @@ export default function Login() {
             localStorage.setItem("yaslamo_user", JSON.stringify(data.user));
             router.push("/");
         } catch (err) {
-            setError("حدث خطأ في الاتصال بالخادم");
+            console.error(err);
+            if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password") {
+                setError("رقم الهاتف أو كلمة السر غير صحيحة");
+            } else if (err.code === "auth/user-not-found") {
+                setError("رقم الهاتف غير مسجل");
+            } else {
+                setError("حدث خطأ في تسجيل الدخول");
+            }
             setLoading(false);
         }
     }
+
 
     return (
         <div className="page-wrapper">

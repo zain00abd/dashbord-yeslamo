@@ -1,45 +1,45 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/lib/mongodb";
-import User from "@/models/User";
+import { adminDb } from "@/lib/firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 
 export async function POST(request) {
     try {
-        await connectDB();
-
-        const { id, name, phone, address } = await request.json();
+        const { id, name, address } = await request.json();
 
         if (!id) {
             return NextResponse.json({ error: "المعرف مطلوب" }, { status: 400 });
         }
 
-        const updateData = {};
+        const updateData = {
+            updatedAt: FieldValue.serverTimestamp(),
+        };
+
         if (name) updateData.name = name.trim();
-        if (phone) updateData.phone = phone.trim();
         if (address) updateData.address = address.trim();
+        // Phone is intentionally not updatable here (it's tied to the Auth email)
 
-        const user = await User.findByIdAndUpdate(id, updateData, {
-            new: true,
-            runValidators: true,
-        }).select("-password");
+        const docRef = adminDb.collection("users").doc(id);
+        const doc = await docRef.get();
 
-        if (!user) {
+        if (!doc.exists) {
             return NextResponse.json({ error: "المستخدم غير موجود" }, { status: 404 });
         }
+
+        await docRef.update(updateData);
+        const updatedDoc = await docRef.get();
+        const profile = updatedDoc.data();
 
         return NextResponse.json({
             message: "تم تحديث البيانات بنجاح",
             user: {
-                id: user._id,
-                name: user.name,
-                phone: user.phone,
-                address: user.address,
+                id,
+                name: profile.name,
+                phone: profile.phone,
+                address: profile.address,
             },
         });
     } catch (error) {
         console.error("Update error:", error);
-        return NextResponse.json(
-            { error: "حدث خطأ في تحديث البيانات" },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: "حدث خطأ في تحديث البيانات" }, { status: 500 });
     }
 }

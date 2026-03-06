@@ -41,7 +41,7 @@ export default function Register() {
 
         if (!isEditing) {
             if (!password) { setError("الرجاء إدخال كلمة السر"); return; }
-            if (password.length < 4) { setError("كلمة السر يجب أن تكون 4 أحرف على الأقل"); return; }
+            if (password.length < 6) { setError("كلمة السر يجب أن تكون 6 أحرف على الأقل"); return; }
             if (password !== confirmPassword) { setError("كلمة السر غير متطابقة"); return; }
         }
 
@@ -153,7 +153,7 @@ export default function Register() {
                                     </svg>
                                     <span>كلمة السر</span>
                                 </div>
-                                <input type="password" className="form-input" placeholder="كلمة السر (4 أحرف على الأقل)"
+                                <input type="password" className="form-input" placeholder="كلمة السر (6 أحرف على الأقل)"
                                     value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />
                             </div>
 

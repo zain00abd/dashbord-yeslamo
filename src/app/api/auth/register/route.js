@@ -1,68 +1,76 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/lib/mongodb";
-import User from "@/models/User";
-import bcrypt from "bcryptjs";
+import { adminDb, adminAuth } from "@/lib/firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 
 export async function POST(request) {
     try {
-        await connectDB();
-
         const { name, phone, password, address } = await request.json();
 
         // Validation
         if (!name || !phone || !password || !address) {
-            return NextResponse.json(
-                { error: "جميع الحقول مطلوبة" },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: "جميع الحقول مطلوبة" }, { status: 400 });
         }
 
         if (password.length < 4) {
             return NextResponse.json(
-                { error: "كلمة السر يجب أن تكون 4 أحرف على الأقل" },
+                { error: "كلمة السر يجب أن تكون 6 أحرف على الأقل" },
                 { status: 400 }
             );
         }
 
-        // Check if phone already exists
-        const existingUser = await User.findOne({ phone: phone.trim() });
-        if (existingUser) {
+        // Check if phone already registered in Firestore
+        const existing = await adminDb
+            .collection("users")
+            .where("phone", "==", phone.trim())
+            .limit(1)
+            .get();
+
+        if (!existing.empty) {
             return NextResponse.json(
                 { error: "رقم الهاتف مسجل بالفعل. يرجى تسجيل الدخول" },
                 { status: 409 }
             );
         }
 
-        // Hash password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        // Create user
-        const user = await User.create({
-            name: name.trim(),
-            phone: phone.trim(),
-            password: hashedPassword,
-            address: address.trim(),
+        // Create user in Firebase Authentication
+        // Use phone number as a pseudo-email for simplicity: phone@yaslamo.app
+        const email = `${phone.trim().replace(/\s/g, "")}@yaslamo.app`;
+        const userRecord = await adminAuth.createUser({
+            email,
+            password,
+            displayName: name.trim(),
         });
 
-        // Return user data (without password)
+        // Save profile in Firestore (NO password stored)
+        await adminDb.collection("users").doc(userRecord.uid).set({
+            name: name.trim(),
+            phone: phone.trim(),
+            address: address.trim(),
+            role: "customer",
+            createdAt: FieldValue.serverTimestamp(),
+        });
+
         return NextResponse.json(
             {
                 message: "تم إنشاء الحساب بنجاح",
                 user: {
-                    id: user._id,
-                    name: user.name,
-                    phone: user.phone,
-                    address: user.address,
+                    id: userRecord.uid,
+                    name: name.trim(),
+                    phone: phone.trim(),
+                    address: address.trim(),
                 },
             },
             { status: 201 }
         );
     } catch (error) {
         console.error("Register error:", error);
-        return NextResponse.json(
-            { error: "حدث خطأ في إنشاء الحساب" },
-            { status: 500 }
-        );
+        // Firebase Auth error codes
+        if (error.code === "auth/email-already-exists") {
+            return NextResponse.json(
+                { error: "رقم الهاتف مسجل بالفعل. يرجى تسجيل الدخول" },
+                { status: 409 }
+            );
+        }
+        return NextResponse.json({ error: "حدث خطأ في إنشاء الحساب" }, { status: 500 });
     }
 }
