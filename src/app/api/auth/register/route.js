@@ -4,14 +4,14 @@ import { FieldValue } from "firebase-admin/firestore";
 
 export async function POST(request) {
     try {
-        const { name, phone, password, address } = await request.json();
+        const { name, phone, password, address, city, locationDesc, locationCoords } = await request.json();
 
         // Validation
         if (!name || !phone || !password || !address) {
             return NextResponse.json({ error: "جميع الحقول مطلوبة" }, { status: 400 });
         }
 
-        if (password.length < 4) {
+        if (password.length < 6) {
             return NextResponse.json(
                 { error: "كلمة السر يجب أن تكون 6 أحرف على الأقل" },
                 { status: 400 }
@@ -46,6 +46,9 @@ export async function POST(request) {
             name: name.trim(),
             phone: phone.trim(),
             address: address.trim(),
+            city: city?.trim() || "",
+            locationDesc: locationDesc?.trim() || "",
+            locationCoords: locationCoords || null,
             role: "customer",
             createdAt: FieldValue.serverTimestamp(),
         });

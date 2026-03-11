@@ -4,7 +4,7 @@ import { FieldValue } from "firebase-admin/firestore";
 
 export async function POST(request) {
     try {
-        const { id, name, address } = await request.json();
+        const { id, name, address, city, locationDesc, locationCoords } = await request.json();
 
         if (!id) {
             return NextResponse.json({ error: "المعرف مطلوب" }, { status: 400 });
@@ -16,6 +16,9 @@ export async function POST(request) {
 
         if (name) updateData.name = name.trim();
         if (address) updateData.address = address.trim();
+        if (city !== undefined) updateData.city = city?.trim() || "";
+        if (locationDesc !== undefined) updateData.locationDesc = locationDesc?.trim() || "";
+        if (locationCoords !== undefined) updateData.locationCoords = locationCoords || null;
         // Phone is intentionally not updatable here (it's tied to the Auth email)
 
         const docRef = adminDb.collection("users").doc(id);

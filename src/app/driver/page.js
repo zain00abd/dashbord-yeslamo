@@ -55,6 +55,38 @@ function OrderModal({ order, onClose, onAccept, isAccepting }) {
                     <div className="detail-value">{order.customerAddress}</div>
                 </div>
 
+                {/* Location: GPS map link + description */}
+                {(order.locationCoords || order.locationDesc) && (
+                    <div style={{ background: "#f0fdf4", borderRadius: "12px", padding: "14px", marginTop: "4px", marginBottom: "4px" }}>
+                        <div style={{ color: "#065f46", fontWeight: 700, fontSize: "0.85rem", marginBottom: "10px" }}>
+                            📍 موقع التوصيل
+                        </div>
+                        {order.locationCoords && (
+                            <a
+                                href={`https://www.google.com/maps?q=${order.locationCoords.lat},${order.locationCoords.lng}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                    display: "flex", alignItems: "center", gap: "8px", padding: "10px 14px",
+                                    background: "#10b981", color: "white", borderRadius: "10px",
+                                    textDecoration: "none", fontWeight: 700, fontSize: "0.95rem",
+                                    marginBottom: order.locationDesc ? "10px" : "0",
+                                }}
+                            >
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="white">
+                                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                                </svg>
+                                فتح الموقع في الخرائط
+                            </a>
+                        )}
+                        {order.locationDesc && (
+                            <div style={{ fontSize: "0.92rem", color: "#065f46", lineHeight: "1.6" }}>
+                                {order.locationDesc}
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 <div className="detail-row" style={{ marginTop: "24px" }}>
                     <div className="detail-label" style={{ display: "flex", justifyContent: "space-between" }}>
                         <span>الطلبات</span>

@@ -10,7 +10,7 @@ function generateOrderNumber() {
 export async function POST(request) {
     try {
         const body = await request.json();
-        const { customerName, customerPhone, customerAddress, items, notes, areaId } = body;
+        const { customerName, customerPhone, customerAddress, items, notes, areaId, locationCoords, locationDesc } = body;
 
         if (!customerName || !customerPhone || !customerAddress || !items || items.length === 0) {
             return NextResponse.json(
@@ -34,12 +34,16 @@ export async function POST(request) {
             status: "pending",
             areaId: areaId || "default",
             driverId: null,
+            // Location — optional, both fields may be empty/null
+            locationCoords: locationCoords || null,   // { lat, lng } or null
+            locationDesc: locationDesc?.trim() || "", // freeform text
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
-            expiresAt, // stored as JS Date — Firestore converts to Timestamp automatically
+            expiresAt,
         };
 
         const docRef = await adminDb.collection("orders").add(orderData);
+
 
         return NextResponse.json(
             {

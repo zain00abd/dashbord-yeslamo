@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { db } from "@/lib/firebase";
+import { doc, onSnapshot, collection, query, where, limit, getDocs } from "firebase/firestore";
 
 export default function CreateOrder() {
     const [userName, setUserName] = useState("");
@@ -11,9 +13,31 @@ export default function CreateOrder() {
     const [orders, setOrders] = useState("");
     const [notes, setNotes] = useState("");
     const [itemsCount, setItemsCount] = useState(0);
-    const [showSuccess, setShowSuccess] = useState(false);
-    const [orderNumber, setOrderNumber] = useState("");
     const [hasAccount, setHasAccount] = useState(false);
+
+    // Account location
+    const [acctCoords, setAcctCoords] = useState(null);
+    const [acctCity, setAcctCity] = useState("");
+    const [acctLocationDesc, setAcctLocationDesc] = useState("");
+
+    // Different-location modal
+    const [showLocModal, setShowLocModal] = useState(false);
+    const [useCustomLoc, setUseCustomLoc] = useState(false);
+    const [modalCoords, setModalCoords] = useState(null);
+    const [modalCity, setModalCity] = useState("");
+    const [modalDesc, setModalDesc] = useState("");
+    const [modalGpsLoading, setModalGpsLoading] = useState(false);
+    const [modalGpsError, setModalGpsError] = useState("");
+    const [modalGpsDone, setModalGpsDone] = useState(false);
+
+    // ── Real-time tracking state ─────────────────────────────
+    // "idle" | "pending" | "accepted"
+    const [trackingStatus, setTrackingStatus] = useState("idle");
+    const [orderNumber, setOrderNumber] = useState("");
+    const [orderId, setOrderId] = useState("");       // Firestore doc ID
+    const [orderItems, setOrderItems] = useState([]); // for summary display
+    const [driverInfo, setDriverInfo] = useState(null); // { name, phone }
+    const unsubscribeRef = useRef(null);
 
     useEffect(() => {
         try {
@@ -23,10 +47,16 @@ export default function CreateOrder() {
                 setUserName(parsed.name || "");
                 setUserPhone(parsed.phone || "");
                 setAddress(parsed.address || "");
+                setAcctCoords(parsed.locationCoords || null);
+                setAcctCity(parsed.city || "");
+                setAcctLocationDesc(parsed.locationDesc || "");
                 setHasAccount(true);
             }
         } catch (e) { }
     }, []);
+
+    // Cleanup listener on unmount
+    useEffect(() => () => { if (unsubscribeRef.current) unsubscribeRef.current(); }, []);
 
     useEffect(() => {
         const lines = orders.split("\n").filter((line) => line.trim() !== "");
@@ -52,10 +82,7 @@ export default function CreateOrder() {
                     const name = line.substring(0, idx).trim();
                     const qtyStr = line.substring(idx + 1).trim();
                     const parsed = parseInt(qtyStr);
-                    if (!isNaN(parsed) && parsed > 0) {
-                        itemName = name;
-                        quantity = parsed;
-                    }
+                    if (!isNaN(parsed) && parsed > 0) { itemName = name; quantity = parsed; }
                     break;
                 }
             }
@@ -63,13 +90,61 @@ export default function CreateOrder() {
         });
     }
 
+    function getModalLocation() {
+        setModalGpsError("");
+        if (!navigator.geolocation) { setModalGpsError("متصفحك لا يدعم تحديد الموقع"); return; }
+        setModalGpsLoading(true);
+        navigator.geolocation.getCurrentPosition(
+            (pos) => { setModalCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setModalGpsDone(true); setModalGpsLoading(false); },
+            () => { setModalGpsError("تعذّر الحصول على موقعك. تأكد من منح الإذن للمتصفح."); setModalGpsLoading(false); },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    }
+
+    function confirmCustomLocation() {
+        if (!modalGpsDone) { setModalGpsError("يرجى تحديد الموقع أولاً"); return; }
+        if (!modalCity.trim()) { setModalGpsError("يرجى إدخال المدينة"); return; }
+        if (!modalDesc.trim()) { setModalGpsError("يرجى إدخال العنوان التفصيلي"); return; }
+        setUseCustomLoc(true);
+        setShowLocModal(false);
+    }
+
+    // Start listening to the order doc in real-time
+    function startTracking(docId) {
+        const orderRef = doc(db, "orders", docId);
+        const unsub = onSnapshot(orderRef, async (snap) => {
+            if (!snap.exists()) return;
+            const data = snap.data();
+
+            if (data.status === "pending") {
+                setTrackingStatus("pending");
+            } else if (data.status === "accepted" && data.driverId) {
+                // Fetch driver profile from users collection
+                let driver = { name: "المندوب", phone: "" };
+                try {
+                    const driverDoc = await getDocs(
+                        query(collection(db, "users"), where("__name__", "==", data.driverId), limit(1))
+                    );
+                    // If stored by uid as doc ID, try direct approach
+                    const { getDoc } = await import("firebase/firestore");
+                    const dRef = doc(db, "users", data.driverId);
+                    const dSnap = await getDoc(dRef);
+                    if (dSnap.exists()) {
+                        driver = { name: dSnap.data().name || "المندوب", phone: dSnap.data().phone || "" };
+                    }
+                } catch (e) { }
+                setDriverInfo(driver);
+                setTrackingStatus("accepted");
+            }
+        });
+        unsubscribeRef.current = unsub;
+    }
+
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState("");
 
     async function submitOrder() {
-        if (!userName.trim()) { alert("الرجاء إدخال اسمك"); return; }
-        if (!userPhone.trim()) { alert("الرجاء إدخال رقم الهاتف"); return; }
-        if (!address.trim()) { alert("الرجاء إدخال عنوان التوصيل"); return; }
+        if (!userName.trim()) { alert("الرجاء تسجيل الدخول أولاً أو إنشاء حساب"); return; }
         if (!orders.trim()) { alert("الرجاء إدخال الطلبات المطلوبة"); return; }
         const items = parseOrders(orders);
         if (items.length === 0) { alert("الرجاء إدخال صنف واحد على الأقل"); return; }
@@ -78,15 +153,21 @@ export default function CreateOrder() {
         setSubmitError("");
 
         try {
+            const activeCoords = useCustomLoc ? modalCoords : acctCoords;
+            const activeCity = useCustomLoc ? modalCity : acctCity;
+            const activeDesc = useCustomLoc ? modalDesc : acctLocationDesc;
+
             const res = await fetch("/api/orders", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     customerName: userName.trim(),
                     customerPhone: userPhone.trim(),
-                    customerAddress: address.trim(),
+                    customerAddress: activeCity ? `${activeCity}، ${activeDesc}` : address.trim(),
                     items,
                     notes: notes.trim(),
+                    locationCoords: activeCoords || null,
+                    locationDesc: activeDesc,
                 }),
             });
 
@@ -98,8 +179,13 @@ export default function CreateOrder() {
                 return;
             }
 
-            setOrderNumber(data.order.orderNumber);
-            setShowSuccess(true);
+            const newOrderId = data.order.id;
+            const newOrderNumber = data.order.orderNumber;
+            setOrderNumber(newOrderNumber);
+            setOrderId(newOrderId);
+            setOrderItems(items);
+            setTrackingStatus("pending");
+            startTracking(newOrderId);
         } catch (error) {
             setSubmitError("تعذر الاتصال بالخادم. تأكد من اتصالك بالإنترنت.");
         } finally {
@@ -107,25 +193,10 @@ export default function CreateOrder() {
         }
     }
 
-    function sendWhatsApp() {
-        const items = parseOrders(orders);
-        let message = `🛒 *طلب جديد من يسلمو*\n\n`;
-        message += `👤 *الاسم:* ${userName}\n`;
-        message += `📱 *الهاتف:* ${userPhone}\n`;
-        message += `📍 *العنوان:* ${address}\n\n`;
-        message += `📋 *الطلبات:*\n`;
-        items.forEach((item) => { message += `  • ${item.name} × ${item.quantity}\n`; });
-        if (notes.trim()) { message += `\n📝 *ملاحظات:* ${notes}\n`; }
-        message += `\n📞 رقم الطلب: #${orderNumber}`;
-        const encoded = encodeURIComponent(message);
-        window.open(`https://wa.me/?text=${encoded}`, "_blank");
-    }
-
     function clearForm() {
         if (confirm("هل أنت متأكد من تفريغ جميع الحقول؟")) {
             setOrders("");
             setNotes("");
-            if (!hasAccount) { setUserName(""); setUserPhone(""); setAddress(""); }
         }
     }
 
@@ -146,63 +217,150 @@ export default function CreateOrder() {
                 {/* Form Content */}
                 <div className="content-area" style={{ paddingTop: "20px", paddingBottom: "30px" }}>
 
-                    {/* Customer Info */}
-                    <div className="form-section">
-                        <div className="section-title">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                            </svg>
-                            <span>معلومات الزبون</span>
-                        </div>
 
-                        {hasAccount && (
-                            <div className="info-banner">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
-                                </svg>
-                                <span className="info-banner-text">تم تعبئة البيانات من حسابك</span>
-                                <Link href="/register" className="info-banner-link">تعديل →</Link>
-                            </div>
-                        )}
 
-                        <div className="form-group">
-                            <input
-                                type="text"
-                                className="form-input"
-                                placeholder="الاسم الكامل"
-                                value={userName}
-                                onChange={(e) => setUserName(e.target.value)}
-                            />
-                        </div>
-                        <div className="form-group">
-                            <input
-                                type="tel"
-                                className="form-input"
-                                placeholder="رقم الهاتف"
-                                value={userPhone}
-                                onChange={(e) => setUserPhone(e.target.value)}
-                                dir="ltr"
-                                style={{ textAlign: "right" }}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Address */}
+                    {/* Location — two options */}
                     <div className="form-section">
                         <div className="section-title">
                             <svg viewBox="0 0 24 24">
                                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
                             </svg>
-                            <span>عنوان التوصيل</span>
+                            <span>موقع التوصيل</span>
                         </div>
-                        <input
-                            type="text"
-                            className="form-input"
-                            placeholder="المنطقة، الشارع، رقم المبنى"
-                            value={address}
-                            onChange={(e) => setAddress(e.target.value)}
-                        />
+
+                        {/* Current active location display */}
+                        <div style={{
+                            background: "#f0fdf4", borderRadius: "12px", padding: "14px",
+                            border: "1.5px solid #a7f3d0", marginBottom: "12px",
+                        }}>
+                            <div style={{ fontSize: "0.78rem", color: "#059669", fontWeight: 700, marginBottom: "6px" }}>
+                                {useCustomLoc ? "📍 موقع مختلف محدد" : "📍 موقع حسابك"}
+                            </div>
+                            <div style={{ fontWeight: 600, color: "#1a1a2e", fontSize: "0.95rem" }}>
+                                {useCustomLoc
+                                    ? `${modalCity}، ${modalDesc}`
+                                    : (acctCity ? `${acctCity}، ${acctLocationDesc}` : address || "—")}
+                            </div>
+                        </div>
+
+                        {/* Change location button */}
+                        <button
+                            type="button"
+                            onClick={() => setShowLocModal(true)}
+                            style={{
+                                width: "100%", padding: "12px", borderRadius: "12px",
+                                border: "1.5px solid #ff6b35", background: "white",
+                                color: "#ff6b35", fontFamily: "inherit", fontWeight: 700,
+                                fontSize: "0.95rem", cursor: "pointer",
+                                display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                            }}
+                        >
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                            </svg>
+                            تحديد موقع مختلف
+                        </button>
                     </div>
+
+                    {/* Location modal overlay */}
+                    {showLocModal && (
+                        <div style={{
+                            position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
+                            display: "flex", alignItems: "flex-end", justifyContent: "center",
+                            zIndex: 1000,
+                        }}
+                            onClick={() => setShowLocModal(false)}
+                        >
+                            <div style={{
+                                background: "white", borderRadius: "24px 24px 0 0",
+                                padding: "24px 20px 40px", width: "100%", maxWidth: "480px",
+                                maxHeight: "85vh", overflowY: "auto",
+                            }}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <div style={{ fontWeight: 800, fontSize: "1.1rem", marginBottom: "20px", textAlign: "center" }}>
+                                    تحديد موقع مختلف
+                                </div>
+
+                                {/* GPS button */}
+                                <button
+                                    type="button"
+                                    onClick={getModalLocation}
+                                    disabled={modalGpsLoading}
+                                    style={{
+                                        width: "100%", display: "flex", alignItems: "center",
+                                        justifyContent: "center", gap: "10px", padding: "14px",
+                                        borderRadius: "12px", border: "2px dashed",
+                                        borderColor: modalGpsDone ? "#10b981" : "#ff6b35",
+                                        background: modalGpsDone ? "#f0fdf4" : "#fff8f6",
+                                        color: modalGpsDone ? "#065f46" : "#c2410c",
+                                        fontFamily: "inherit", fontWeight: 700, fontSize: "1rem",
+                                        cursor: modalGpsLoading ? "wait" : "pointer",
+                                        marginBottom: "12px",
+                                    }}
+                                >
+                                    {modalGpsDone ? "✅" : "📍"}
+                                    {modalGpsLoading
+                                        ? "جاري تحديد موقعك..."
+                                        : modalGpsDone
+                                            ? `تم (${modalCoords.lat.toFixed(4)}, ${modalCoords.lng.toFixed(4)})`
+                                            : "تحديد موقعي تلقائياً أولاً"}
+                                </button>
+
+                                {modalGpsError && (
+                                    <div style={{ color: "#c62828", fontSize: "0.85rem", marginBottom: "10px", padding: "8px 12px", background: "#fff0f0", borderRadius: "8px" }}>
+                                        {modalGpsError}
+                                    </div>
+                                )}
+
+                                {/* Fields — shown only after GPS */}
+                                {modalGpsDone && (
+                                    <>
+                                        <input
+                                            type="text"
+                                            className="form-input"
+                                            placeholder="المدينة"
+                                            value={modalCity}
+                                            onChange={(e) => setModalCity(e.target.value)}
+                                            style={{ marginBottom: "12px" }}
+                                        />
+                                        <textarea
+                                            className="form-input"
+                                            style={{ minHeight: "80px", resize: "vertical" }}
+                                            placeholder="عنوان تفصيلي: الحي، الشارع، بجانب أي معلم، رقم البناء..."
+                                            value={modalDesc}
+                                            onChange={(e) => setModalDesc(e.target.value)}
+                                        />
+                                    </>
+                                )}
+
+                                <div style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowLocModal(false)}
+                                        style={{
+                                            flex: 1, padding: "12px", borderRadius: "12px",
+                                            border: "1.5px solid #e2e8f0", background: "white",
+                                            fontFamily: "inherit", fontWeight: 600, cursor: "pointer", color: "#64748b",
+                                        }}
+                                    >
+                                        إلغاء
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={confirmCustomLocation}
+                                        style={{
+                                            flex: 2, padding: "12px", borderRadius: "12px",
+                                            border: "none", background: "#ff6b35", color: "white",
+                                            fontFamily: "inherit", fontWeight: 700, cursor: "pointer",
+                                        }}
+                                    >
+                                        تأكيد الموقع
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Orders */}
                     <div className="form-section">
@@ -295,32 +453,190 @@ export default function CreateOrder() {
                 </div>
             </div>
 
-            {/* Success Modal */}
-            {showSuccess && (
-                <div className="modal-overlay" onClick={() => setShowSuccess(false)}>
-                    <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-icon">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+            {/* ── TRACKING SCREEN — Pending ───────────────────────── */}
+            {trackingStatus === "pending" && (
+                <div style={{
+                    position: "fixed", inset: 0, background: "linear-gradient(135deg,#fff8f6 0%,#fff 100%)",
+                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                    zIndex: 2000, padding: "24px", textAlign: "center",
+                }}>
+                    <style>{`
+                        @keyframes pulse-ring {
+                            0% { transform: scale(0.9); opacity: 1; }
+                            100% { transform: scale(1.6); opacity: 0; }
+                        }
+                        @keyframes spin-dot {
+                            to { stroke-dashoffset: 0; }
+                        }
+                        .pulse-wrap { position:relative; width:120px; height:120px; display:flex; align-items:center; justify-content:center; }
+                        .pulse-ring {
+                            position:absolute; inset:0; border-radius:50%;
+                            border: 3px solid #ff6b35; animation: pulse-ring 1.5s ease-out infinite;
+                        }
+                        .pulse-ring:nth-child(2) { animation-delay:0.5s; }
+                    `}</style>
+
+                    <div className="pulse-wrap">
+                        <div className="pulse-ring"></div>
+                        <div className="pulse-ring"></div>
+                        <div style={{
+                            width: 72, height: 72, borderRadius: "50%",
+                            background: "linear-gradient(135deg,#ff6b35,#ff8c5a)",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            boxShadow: "0 8px 24px rgba(255,107,53,0.4)",
+                        }}>
+                            <svg viewBox="0 0 24 24" width="36" height="36" fill="white">
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
                             </svg>
                         </div>
-                        <div className="modal-title">تم تأكيد الطلب! ✅</div>
-                        <div className="modal-text">
-                            شكراً {userName}، سيتم التواصل معك على {userPhone}
-                        </div>
-                        <div className="modal-order-number">#{orderNumber}</div>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                            <button className="btn btn-whatsapp" onClick={sendWhatsApp}>
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="white">
-                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
-                                </svg>
-                                إرسال عبر واتساب
-                            </button>
-                            <button className="btn btn-secondary" onClick={() => setShowSuccess(false)}>
-                                إغلاق
-                            </button>
-                        </div>
                     </div>
+
+                    <h2 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#1a1a2e", marginTop: "32px", marginBottom: "8px" }}>
+                        جاري البحث عن مندوب...
+                    </h2>
+                    <p style={{ color: "#64748b", fontSize: "0.95rem", marginBottom: "32px" }}>
+                        طلبك في الانتظار، سيتم إشعارك فور قبول مندوب لطلبك
+                    </p>
+
+                    <div style={{
+                        background: "white", borderRadius: "16px", padding: "20px 24px",
+                        boxShadow: "0 4px 20px rgba(0,0,0,0.08)", width: "100%", maxWidth: "380px",
+                        textAlign: "right",
+                    }}>
+                        <div style={{ fontSize: "0.75rem", color: "#ff6b35", fontWeight: 700, marginBottom: "12px", letterSpacing: "0.05em" }}>
+                            ملخص طلبك
+                        </div>
+                        <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#1a1a2e", marginBottom: "12px" }}>
+                            #{orderNumber}
+                        </div>
+                        {orderItems.map((item, i) => (
+                            <div key={i} style={{
+                                display: "flex", justifyContent: "space-between", alignItems: "center",
+                                padding: "8px 0", borderBottom: i < orderItems.length - 1 ? "1px solid #f1f5f9" : "none",
+                                fontSize: "0.92rem", color: "#334155",
+                            }}>
+                                <span style={{ background: "#fff0eb", color: "#ff6b35", borderRadius: "6px", padding: "2px 8px", fontSize: "0.8rem", fontWeight: 700 }}>
+                                    × {item.quantity}
+                                </span>
+                                <span>{item.name}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    <p style={{ marginTop: "24px", color: "#94a3b8", fontSize: "0.82rem" }}>
+                        لا تغلق هذه الشاشة حتى يقبل المندوب طلبك
+                    </p>
+                </div>
+            )}
+
+            {/* ── TRACKING SCREEN — Accepted ──────────────────────── */}
+            {trackingStatus === "accepted" && driverInfo && (
+                <div style={{
+                    position: "fixed", inset: 0, background: "linear-gradient(135deg,#f0fdf4 0%,#fff 100%)",
+                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                    zIndex: 2000, padding: "24px", textAlign: "center", overflowY: "auto",
+                }}>
+                    <style>{`
+                        @keyframes pop-in {
+                            0% { transform: scale(0.5); opacity: 0; }
+                            70% { transform: scale(1.1); }
+                            100% { transform: scale(1); opacity: 1; }
+                        }
+                        .accepted-icon { animation: pop-in 0.5s ease-out forwards; }
+                    `}</style>
+
+                    <div className="accepted-icon" style={{
+                        width: 80, height: 80, borderRadius: "50%",
+                        background: "linear-gradient(135deg,#10b981,#059669)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        boxShadow: "0 8px 28px rgba(16,185,129,0.4)", marginBottom: "20px",
+                    }}>
+                        <svg viewBox="0 0 24 24" width="42" height="42" fill="white">
+                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                        </svg>
+                    </div>
+
+                    <h2 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#065f46", marginBottom: "4px" }}>
+                        تم قبول طلبك! 🎉
+                    </h2>
+                    <p style={{ color: "#6b7280", fontSize: "0.92rem", marginBottom: "28px" }}>
+                        مندوب في طريقه إليك الآن
+                    </p>
+
+                    {/* Driver card */}
+                    <div style={{
+                        background: "white", borderRadius: "20px", padding: "24px",
+                        boxShadow: "0 4px 24px rgba(0,0,0,0.1)", width: "100%", maxWidth: "380px",
+                        textAlign: "right", marginBottom: "16px",
+                    }}>
+                        <div style={{ fontSize: "0.72rem", color: "#10b981", fontWeight: 700, marginBottom: "14px", letterSpacing: "0.05em" }}>
+                            معلومات المندوب
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                            <div style={{
+                                width: 52, height: 52, borderRadius: "50%",
+                                background: "linear-gradient(135deg,#ff6b35,#ff8c5a)",
+                                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                            }}>
+                                <svg viewBox="0 0 24 24" width="26" height="26" fill="white">
+                                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <div style={{ fontWeight: 800, fontSize: "1.1rem", color: "#1a1a2e" }}>{driverInfo.name}</div>
+                                {driverInfo.phone && (
+                                    <div style={{ color: "#64748b", fontSize: "0.87rem", marginTop: "2px" }} dir="ltr">{driverInfo.phone}</div>
+                                )}
+                            </div>
+                        </div>
+                        {driverInfo.phone && (
+                            <a href={`tel:${driverInfo.phone}`} style={{
+                                display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                                marginTop: "16px", padding: "13px", borderRadius: "12px",
+                                background: "linear-gradient(135deg,#10b981,#059669)", color: "white",
+                                textDecoration: "none", fontWeight: 700, fontSize: "0.95rem",
+                            }}>
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="white">
+                                    <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
+                                </svg>
+                                اتصل بالمندوب
+                            </a>
+                        )}
+                    </div>
+
+                    {/* Order summary */}
+                    <div style={{
+                        background: "white", borderRadius: "16px", padding: "20px 24px",
+                        boxShadow: "0 4px 20px rgba(0,0,0,0.06)", width: "100%", maxWidth: "380px",
+                        textAlign: "right", marginBottom: "20px",
+                    }}>
+                        <div style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: 700, marginBottom: "10px" }}>
+                            تفاصيل طلبك — #{orderNumber}
+                        </div>
+                        {orderItems.map((item, i) => (
+                            <div key={i} style={{
+                                display: "flex", justifyContent: "space-between",
+                                padding: "8px 0", borderBottom: i < orderItems.length - 1 ? "1px solid #f1f5f9" : "none",
+                                fontSize: "0.92rem", color: "#334155",
+                            }}>
+                                <span style={{ background: "#f0fdf4", color: "#059669", borderRadius: "6px", padding: "2px 8px", fontSize: "0.8rem", fontWeight: 700 }}>
+                                    × {item.quantity}
+                                </span>
+                                <span>{item.name}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    <button
+                        onClick={() => { setTrackingStatus("idle"); setOrderItems([]); setOrders(""); setNotes(""); }}
+                        style={{
+                            padding: "13px 32px", borderRadius: "12px", border: "1.5px solid #e2e8f0",
+                            background: "white", color: "#64748b", fontFamily: "inherit",
+                            fontWeight: 600, fontSize: "0.95rem", cursor: "pointer",
+                        }}
+                    >
+                        إنشاء طلب جديد
+                    </button>
                 </div>
             )}
         </>
