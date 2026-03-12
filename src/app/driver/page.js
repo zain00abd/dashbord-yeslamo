@@ -189,11 +189,13 @@ function DriverLogin({ onLogin }) {
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────
 export default function DriverDashboard() {
-    const [user, setUser] = useState(null);          // Firebase Auth user
+    const [user, setUser] = useState(null);
     const [authChecked, setAuthChecked] = useState(false);
     const [orders, setOrders] = useState([]);
+    const [acceptedOrders, setAcceptedOrders] = useState([]);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [isAccepting, setIsAccepting] = useState(false);
+    const [activeTab, setActiveTab] = useState("available"); // "available" | "mine"
 
     // Restore auth state on page load
     useEffect(() => {
@@ -208,7 +210,7 @@ export default function DriverDashboard() {
         };
     }, []);
 
-    // Real-time listener: only fires when user is logged in
+    // Real-time listener: pending orders for this area
     useEffect(() => {
         if (!user) return;
 
@@ -219,20 +221,37 @@ export default function DriverDashboard() {
             orderBy("createdAt", "desc")
         );
 
-        // onSnapshot — auto-updates the UI whenever Firestore changes
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const liveOrders = snapshot.docs.map((docSnap) => {
                 const data = docSnap.data();
-                return {
-                    id: docSnap.id,
-                    ...data,
-                    createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
-                };
+                return { id: docSnap.id, ...data, createdAt: data.createdAt?.toDate?.()?.toISOString() || null };
             });
             setOrders(liveOrders);
-        }, (error) => {
-            console.error("onSnapshot error:", error);
-        });
+        }, (error) => { console.error("onSnapshot error:", error); });
+
+        return () => unsubscribe();
+    }, [user]);
+
+    // Real-time listener: this driver's accepted orders
+    useEffect(() => {
+        if (!user) return;
+
+        const q = query(
+            collection(db, "orders"),
+            where("driverId", "==", user.uid),
+            where("status", "==", "accepted"),
+            orderBy("updatedAt", "desc")
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const mine = snapshot.docs.map((docSnap) => {
+                const data = docSnap.data();
+                return { id: docSnap.id, ...data, updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null };
+            });
+            setAcceptedOrders(mine);
+            // Auto-switch to "mine" tab when a new order appears
+            if (mine.length > 0) setActiveTab("mine");
+        }, (error) => { console.error("accepted onSnapshot error:", error); });
 
         return () => unsubscribe();
     }, [user]);
@@ -279,9 +298,7 @@ export default function DriverDashboard() {
         );
     }
 
-    if (!user) {
-        return <DriverLogin onLogin={setUser} />;
-    }
+    if (!user) return <DriverLogin onLogin={setUser} />;
 
     return (
         <div className="driver-layout">
@@ -303,47 +320,196 @@ export default function DriverDashboard() {
                 </div>
             </header>
 
+            {/* ── Tab Bar ── */}
+            <div style={{ display: "flex", borderBottom: "2px solid #f1f5f9", background: "white", position: "sticky", top: 0, zIndex: 10 }}>
+                <button
+                    onClick={() => setActiveTab("available")}
+                    style={{
+                        flex: 1, padding: "14px", border: "none", background: "none", cursor: "pointer",
+                        fontFamily: "inherit", fontWeight: 700, fontSize: "0.92rem",
+                        color: activeTab === "available" ? "var(--driver-primary)" : "#94a3b8",
+                        borderBottom: activeTab === "available" ? "2px solid var(--driver-primary)" : "2px solid transparent",
+                        marginBottom: "-2px", transition: "all 0.2s",
+                    }}
+                >
+                    الطلبات المتاحة
+                    {orders.length > 0 && (
+                        <span style={{ marginRight: "6px", background: "var(--driver-primary)", color: "white", borderRadius: "10px", padding: "1px 7px", fontSize: "0.75rem" }}>
+                            {orders.length}
+                        </span>
+                    )}
+                </button>
+                <button
+                    onClick={() => setActiveTab("mine")}
+                    style={{
+                        flex: 1, padding: "14px", border: "none", background: "none", cursor: "pointer",
+                        fontFamily: "inherit", fontWeight: 700, fontSize: "0.92rem",
+                        color: activeTab === "mine" ? "#10b981" : "#94a3b8",
+                        borderBottom: activeTab === "mine" ? "2px solid #10b981" : "2px solid transparent",
+                        marginBottom: "-2px", transition: "all 0.2s",
+                    }}
+                >
+                    طلباتي
+                    {acceptedOrders.length > 0 && (
+                        <span style={{ marginRight: "6px", background: "#10b981", color: "white", borderRadius: "10px", padding: "1px 7px", fontSize: "0.75rem" }}>
+                            {acceptedOrders.length}
+                        </span>
+                    )}
+                </button>
+            </div>
+
             <main className="driver-content">
-                <div className="section-heading">
-                    الطلبات المتاحة ({orders.length})
-                    <span style={{ fontSize: "0.75rem", color: "var(--driver-primary)", marginRight: "8px", fontWeight: 600 }}>● مباشر</span>
-                </div>
 
-                {orders.length === 0 ? (
-                    <div style={{ textAlign: "center", padding: "60px 20px", background: "white", borderRadius: "16px", border: "1px dashed #cbd5e1" }}>
-                        <svg viewBox="0 0 24 24" width="48" height="48" fill="#e2e8f0" style={{ marginBottom: "16px" }}>
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v-6H11v6zm0-8h2V7h-2v2z" />
-                        </svg>
-                        <div style={{ fontWeight: 600, color: "#64748b", fontSize: "1.1rem" }}>لا توجد طلبات جديدة حالياً</div>
-                        <div style={{ fontSize: "0.9rem", color: "#94a3b8", marginTop: "8px" }}>ستظهر الطلبات الجديدة هنا تلقائياً</div>
-                    </div>
-                ) : (
-                    orders.map((order) => (
-                        <div key={order.id} className="order-card">
-                            <div className="order-card-header">
-                                <span className="order-time">
-                                    {order.createdAt
-                                        ? new Date(order.createdAt).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })
-                                        : ""}
-                                </span>
-                                <span className="order-id">{order.orderNumber}</span>
-                            </div>
-
-                            <div className="order-customer">
-                                <div className="customer-name">{order.customerName}</div>
-                                <div className="customer-address">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="var(--driver-primary)" style={{ flexShrink: 0, marginTop: "2px" }}>
-                                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-                                    </svg>
-                                    {order.customerAddress}
-                                </div>
-                            </div>
-
-                            <button className="order-details-btn" onClick={() => setSelectedOrder(order)}>
-                                عرض التفاصيل وقبول الطلب
-                            </button>
+                {/* ── Tab: Available Orders ── */}
+                {activeTab === "available" && (
+                    <>
+                        <div className="section-heading">
+                            الطلبات المتاحة ({orders.length})
+                            <span style={{ fontSize: "0.75rem", color: "var(--driver-primary)", marginRight: "8px", fontWeight: 600 }}>● مباشر</span>
                         </div>
-                    ))
+
+                        {orders.length === 0 ? (
+                            <div style={{ textAlign: "center", padding: "60px 20px", background: "white", borderRadius: "16px", border: "1px dashed #cbd5e1" }}>
+                                <svg viewBox="0 0 24 24" width="48" height="48" fill="#e2e8f0" style={{ marginBottom: "16px" }}>
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v-6H11v6zm0-8h2V7h-2v2z" />
+                                </svg>
+                                <div style={{ fontWeight: 600, color: "#64748b", fontSize: "1.1rem" }}>لا توجد طلبات جديدة حالياً</div>
+                                <div style={{ fontSize: "0.9rem", color: "#94a3b8", marginTop: "8px" }}>ستظهر الطلبات الجديدة هنا تلقائياً</div>
+                            </div>
+                        ) : (
+                            orders.map((order) => (
+                                <div key={order.id} className="order-card">
+                                    <div className="order-card-header">
+                                        <span className="order-time">
+                                            {order.createdAt ? new Date(order.createdAt).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : ""}
+                                        </span>
+                                        <span className="order-id">{order.orderNumber}</span>
+                                    </div>
+                                    <div className="order-customer">
+                                        <div className="customer-name">{order.customerName}</div>
+                                        <div className="customer-address">
+                                            <svg viewBox="0 0 24 24" width="16" height="16" fill="var(--driver-primary)" style={{ flexShrink: 0, marginTop: "2px" }}>
+                                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                                            </svg>
+                                            {order.customerAddress}
+                                        </div>
+                                    </div>
+                                    <button className="order-details-btn" onClick={() => setSelectedOrder(order)}>
+                                        عرض التفاصيل وقبول الطلب
+                                    </button>
+                                </div>
+                            ))
+                        )}
+                    </>
+                )}
+
+                {/* ── Tab: My Accepted Orders ── */}
+                {activeTab === "mine" && (
+                    <>
+                        <div className="section-heading">
+                            طلباتي المقبولة ({acceptedOrders.length})
+                        </div>
+
+                        {acceptedOrders.length === 0 ? (
+                            <div style={{ textAlign: "center", padding: "60px 20px", background: "white", borderRadius: "16px", border: "1px dashed #cbd5e1" }}>
+                                <svg viewBox="0 0 24 24" width="48" height="48" fill="#e2e8f0" style={{ marginBottom: "16px" }}>
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                                </svg>
+                                <div style={{ fontWeight: 600, color: "#64748b", fontSize: "1.1rem" }}>لم تقبل أي طلب بعد</div>
+                                <div style={{ fontSize: "0.9rem", color: "#94a3b8", marginTop: "8px" }}>اقبل طلباً من تبويب الطلبات المتاحة</div>
+                            </div>
+                        ) : (
+                            acceptedOrders.map((order) => (
+                                <div key={order.id} style={{
+                                    background: "white", borderRadius: "20px",
+                                    boxShadow: "0 2px 16px rgba(16,185,129,0.1)",
+                                    border: "1.5px solid #a7f3d0", marginBottom: "16px", overflow: "hidden",
+                                }}>
+                                    {/* Card Header */}
+                                    <div style={{
+                                        background: "linear-gradient(135deg,#10b981,#059669)",
+                                        padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center",
+                                    }}>
+                                        <span style={{ color: "white", fontWeight: 800, fontSize: "1rem" }}>{order.orderNumber}</span>
+                                        <span style={{ background: "rgba(255,255,255,0.2)", color: "white", borderRadius: "10px", padding: "3px 10px", fontSize: "0.78rem", fontWeight: 600 }}>مقبول ✓</span>
+                                    </div>
+
+                                    <div style={{ padding: "18px" }}>
+                                        {/* Customer info */}
+                                        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+                                            <div style={{
+                                                width: 44, height: 44, borderRadius: "50%",
+                                                background: "linear-gradient(135deg,#ff6b35,#ff8c5a)",
+                                                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                                            }}>
+                                                <svg viewBox="0 0 24 24" width="22" height="22" fill="white">
+                                                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <div style={{ fontWeight: 800, fontSize: "1.05rem", color: "#1a1a2e" }}>{order.customerName}</div>
+                                                <a href={`tel:${order.customerPhone}`} style={{ color: "#10b981", fontWeight: 600, fontSize: "0.88rem", textDecoration: "none" }} dir="ltr">
+                                                    📞 {order.customerPhone}
+                                                </a>
+                                            </div>
+                                        </div>
+
+                                        {/* Address & map */}
+                                        <div style={{ background: "#f8fafc", borderRadius: "12px", padding: "12px 14px", marginBottom: "14px" }}>
+                                            <div style={{ fontSize: "0.75rem", color: "#94a3b8", fontWeight: 700, marginBottom: "6px" }}>📍 عنوان التوصيل</div>
+                                            <div style={{ fontWeight: 600, color: "#334155", fontSize: "0.92rem", marginBottom: order.locationCoords ? "10px" : 0 }}>
+                                                {order.customerAddress}
+                                            </div>
+                                            {order.locationDesc && (
+                                                <div style={{ fontSize: "0.85rem", color: "#64748b", marginBottom: order.locationCoords ? "10px" : 0 }}>{order.locationDesc}</div>
+                                            )}
+                                            {order.locationCoords && (
+                                                <a
+                                                    href={`https://www.google.com/maps?q=${order.locationCoords.lat},${order.locationCoords.lng}`}
+                                                    target="_blank" rel="noopener noreferrer"
+                                                    style={{
+                                                        display: "flex", alignItems: "center", gap: "6px", padding: "9px 12px",
+                                                        background: "#10b981", color: "white", borderRadius: "10px",
+                                                        textDecoration: "none", fontWeight: 700, fontSize: "0.85rem",
+                                                    }}
+                                                >
+                                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="white">
+                                                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                                                    </svg>
+                                                    فتح في الخرائط
+                                                </a>
+                                            )}
+                                        </div>
+
+                                        {/* Items */}
+                                        <div style={{ marginBottom: order.notes ? "14px" : 0 }}>
+                                            <div style={{ fontSize: "0.75rem", color: "#94a3b8", fontWeight: 700, marginBottom: "8px", display: "flex", justifyContent: "space-between" }}>
+                                                <span>الطلبات</span>
+                                                <span style={{ background: "#f1f5f9", color: "#64748b", borderRadius: "8px", padding: "1px 8px" }}>{order.items?.length || 0} أصناف</span>
+                                            </div>
+                                            {order.items?.map((item, idx) => (
+                                                <div key={idx} style={{
+                                                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                                                    padding: "8px 0", borderBottom: idx < (order.items.length - 1) ? "1px solid #f1f5f9" : "none",
+                                                    fontSize: "0.92rem", color: "#334155",
+                                                }}>
+                                                    <span style={{ background: "#f0fdf4", color: "#059669", borderRadius: "6px", padding: "2px 8px", fontWeight: 700, fontSize: "0.8rem" }}>× {item.quantity}</span>
+                                                    <span style={{ fontWeight: 600 }}>{item.name}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Notes */}
+                                        {order.notes && (
+                                            <div style={{ background: "#fef3c7", borderRadius: "10px", padding: "10px 14px", fontSize: "0.88rem", color: "#92400e" }}>
+                                                📝 {order.notes}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </>
                 )}
             </main>
 
