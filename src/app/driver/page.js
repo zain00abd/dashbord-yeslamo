@@ -9,6 +9,9 @@ import {
     onSnapshot,
     runTransaction,
     doc,
+    getDoc,
+    getDocs,
+    updateDoc,
     serverTimestamp,
 } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
@@ -289,6 +292,29 @@ export default function DriverDashboard() {
         }
     }, [user]);
 
+    // ── Verification: set customerStatus ONCE ──────────────────────────────
+    const handleVerifyCustomer = useCallback(async (order, action) => {
+        try {
+            // Write to the ORDER doc (so onSnapshot updates the card instantly)
+            await updateDoc(doc(db, "orders", order.id), { customerStatus: action });
+
+            // Also write to the USER doc (so future orders inherit the status)
+            if (order.customerUid) {
+                await updateDoc(doc(db, "users", order.customerUid), { customerStatus: action });
+            } else if (order.customerPhone) {
+                const snap = await getDocs(
+                    query(collection(db, "users"), where("phone", "==", order.customerPhone.trim()))
+                );
+                if (!snap.empty) await updateDoc(snap.docs[0].ref, { customerStatus: action });
+            }
+
+            alert(action === "verified" ? "✅ تم توثيق الزبون" : "🚫 تم الإبلاغ عن الزبون");
+        } catch (err) {
+            console.error("verify error:", err);
+            alert("حدث خطأ");
+        }
+    }, []);
+
     // ── Render ────────────────────────────────────────────────────────────
     if (!authChecked) {
         return (
@@ -503,6 +529,30 @@ export default function DriverDashboard() {
                                         {order.notes && (
                                             <div style={{ background: "#fef3c7", borderRadius: "10px", padding: "10px 14px", fontSize: "0.88rem", color: "#92400e" }}>
                                                 📝 {order.notes}
+                                            </div>
+                                        )}
+
+                                        {/* Verification: only shown when customerStatus is NOT set */}
+                                        {!order.customerStatus && (
+                                            <div style={{ marginTop: "14px", background: "#fffbeb", borderRadius: "12px", padding: "14px", border: "1.5px solid #fde68a" }}>
+                                                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+                                                    <span style={{ fontSize: "1.1rem" }}>⚠️</span>
+                                                    <span style={{ fontWeight: 700, color: "#92400e", fontSize: "0.88rem" }}>زبون غير موثق</span>
+                                                </div>
+                                                <div style={{ display: "flex", gap: "8px" }}>
+                                                    <button
+                                                        onClick={() => handleVerifyCustomer(order, "verified")}
+                                                        style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "none", background: "#10b981", color: "white", fontFamily: "inherit", fontWeight: 700, fontSize: "0.88rem", cursor: "pointer" }}
+                                                    >
+                                                        ✅ حقيقي
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleVerifyCustomer(order, "flagged")}
+                                                        style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "none", background: "#ef4444", color: "white", fontFamily: "inherit", fontWeight: 700, fontSize: "0.88rem", cursor: "pointer" }}
+                                                    >
+                                                        🚫 احتيال
+                                                    </button>
+                                                </div>
                                             </div>
                                         )}
                                     </div>

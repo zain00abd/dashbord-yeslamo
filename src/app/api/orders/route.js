@@ -10,7 +10,7 @@ function generateOrderNumber() {
 export async function POST(request) {
     try {
         const body = await request.json();
-        const { customerName, customerPhone, customerAddress, items, notes, areaId, locationCoords, locationDesc } = body;
+        const { customerName, customerPhone, customerAddress, customerUid, items, notes, areaId, locationCoords, locationDesc } = body;
 
         if (!customerName || !customerPhone || !customerAddress || !items || items.length === 0) {
             return NextResponse.json(
@@ -24,11 +24,24 @@ export async function POST(request) {
         // Calculate optional expiresAt (30 minutes from now)
         const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
 
+        // Look up customer's verification status from their user doc
+        let customerStatus = null;
+        if (customerUid) {
+            try {
+                const userDoc = await adminDb.collection("users").doc(customerUid).get();
+                if (userDoc.exists) {
+                    customerStatus = userDoc.data().customerStatus || null;
+                }
+            } catch (_) {}
+        }
+
         const orderData = {
             orderNumber,
             customerName: customerName.trim(),
             customerPhone: customerPhone.trim(),
             customerAddress: customerAddress.trim(),
+            customerUid: customerUid || null,
+            customerStatus,          // null = unverified, "verified" or "flagged"
             items,
             notes: notes?.trim() || "",
             status: "pending",

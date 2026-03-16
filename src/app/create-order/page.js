@@ -14,6 +14,7 @@ export default function CreateOrder() {
     const [notes, setNotes] = useState("");
     const [itemsCount, setItemsCount] = useState(0);
     const [hasAccount, setHasAccount] = useState(false);
+    const [userUid, setUserUid] = useState("");
 
     // Account location
     const [acctCoords, setAcctCoords] = useState(null);
@@ -50,6 +51,7 @@ export default function CreateOrder() {
                 setAcctCoords(parsed.locationCoords || null);
                 setAcctCity(parsed.city || "");
                 setAcctLocationDesc(parsed.locationDesc || "");
+                if (parsed.id) setUserUid(parsed.id);
                 setHasAccount(true);
             }
         } catch (e) { }
@@ -164,6 +166,7 @@ export default function CreateOrder() {
                     customerName: userName.trim(),
                     customerPhone: userPhone.trim(),
                     customerAddress: activeCity ? `${activeCity}، ${activeDesc}` : address.trim(),
+                    customerUid: userUid || null,
                     items,
                     notes: notes.trim(),
                     locationCoords: activeCoords || null,
