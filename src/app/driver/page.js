@@ -31,9 +31,9 @@ function OrderModal({ order, onClose, onAccept, isAccepting }) {
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
-                    <div className="modal-title">تفاصيل الطلب {order.orderNumber}</div>
+                    <div className="modal-title">تفاصيل الطلب <span style={{ color: "var(--driver-primary)", fontFamily: "'Outfit', sans-serif" }}>#{order.orderNumber}</span></div>
                     <button className="close-btn" onClick={onClose}>
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="var(--driver-text-muted)">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="#64748b">
                             <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
                         </svg>
                     </button>
@@ -55,13 +55,13 @@ function OrderModal({ order, onClose, onAccept, isAccepting }) {
 
                 <div className="detail-row">
                     <div className="detail-label">عنوان التوصيل</div>
-                    <div className="detail-value">{order.customerAddress}</div>
+                    <div className="detail-value" style={{ lineHeight: "1.6" }}>{order.customerAddress}</div>
                 </div>
 
                 {/* Location: GPS map link + description */}
                 {(order.locationCoords || order.locationDesc) && (
-                    <div style={{ background: "#f0fdf4", borderRadius: "12px", padding: "14px", marginTop: "4px", marginBottom: "4px" }}>
-                        <div style={{ color: "#065f46", fontWeight: 700, fontSize: "0.85rem", marginBottom: "10px" }}>
+                    <div style={{ background: "rgba(16, 185, 129, 0.05)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "16px", padding: "16px", marginTop: "8px", marginBottom: "8px" }}>
+                        <div style={{ color: "var(--driver-primary)", fontWeight: 800, fontSize: "0.9rem", marginBottom: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
                             📍 موقع التوصيل
                         </div>
                         {order.locationCoords && (
@@ -70,20 +70,20 @@ function OrderModal({ order, onClose, onAccept, isAccepting }) {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 style={{
-                                    display: "flex", alignItems: "center", gap: "8px", padding: "10px 14px",
-                                    background: "#10b981", color: "white", borderRadius: "10px",
-                                    textDecoration: "none", fontWeight: 700, fontSize: "0.95rem",
-                                    marginBottom: order.locationDesc ? "10px" : "0",
+                                    display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", padding: "12px",
+                                    background: "var(--driver-primary-gradient)", color: "white", borderRadius: "12px",
+                                    textDecoration: "none", fontWeight: 800, fontSize: "1rem",
+                                    marginBottom: order.locationDesc ? "12px" : "0", boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)"
                                 }}
                             >
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="white">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="white">
                                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
                                 </svg>
                                 فتح الموقع في الخرائط
                             </a>
                         )}
                         {order.locationDesc && (
-                            <div style={{ fontSize: "0.92rem", color: "#065f46", lineHeight: "1.6" }}>
+                            <div style={{ fontSize: "0.95rem", color: "var(--driver-text)", lineHeight: "1.6", fontWeight: 700 }}>
                                 {order.locationDesc}
                             </div>
                         )}
@@ -91,17 +91,17 @@ function OrderModal({ order, onClose, onAccept, isAccepting }) {
                 )}
 
                 <div className="detail-row" style={{ marginTop: "24px" }}>
-                    <div className="detail-label" style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span>الطلبات</span>
-                        <span style={{ background: "var(--driver-primary)", color: "white", padding: "2px 8px", borderRadius: "12px", fontSize: "0.8rem", fontWeight: "bold" }}>
+                    <div className="detail-label" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span>قائمة الطلبات</span>
+                        <span style={{ background: "var(--driver-primary-gradient)", color: "white", padding: "4px 10px", borderRadius: "12px", fontSize: "0.85rem", fontWeight: "bold", boxShadow: "0 2px 8px rgba(16, 185, 129, 0.3)" }}>
                             {order.items?.length || 0} أصناف
                         </span>
                     </div>
                     <div className="items-list">
                         {order.items?.map((item, idx) => (
                             <div key={idx} className="item-row">
-                                <span style={{ fontWeight: 600 }}>{item.name}</span>
-                                <span style={{ color: "var(--driver-text-muted)" }}>× {item.quantity}</span>
+                                <span style={{ fontWeight: 700, color: "var(--driver-text)" }}>{item.name}</span>
+                                <span style={{ background: "rgba(5, 150, 105, 0.1)", color: "var(--driver-primary)", padding: "2px 8px", borderRadius: "8px", fontWeight: 800, fontSize: "0.9rem" }}>× {item.quantity}</span>
                             </div>
                         ))}
                     </div>
@@ -110,8 +110,9 @@ function OrderModal({ order, onClose, onAccept, isAccepting }) {
                 {order.notes && (
                     <div className="detail-row" style={{ marginTop: "20px" }}>
                         <div className="detail-label">ملاحظات العميل</div>
-                        <div style={{ background: "#fef3c7", padding: "12px", borderRadius: "8px", fontSize: "0.95rem", color: "#92400e" }}>
-                            {order.notes}
+                        <div style={{ background: "#fef3c7", padding: "14px", borderRadius: "12px", fontSize: "1rem", color: "#92400e", fontWeight: 700, border: "1px solid #fde68a", display: "flex", gap: "8px" }}>
+                            <span>📋</span>
+                            <span>{order.notes}</span>
                         </div>
                     </div>
                 )}
@@ -152,40 +153,50 @@ function DriverLogin({ onLogin }) {
     };
 
     return (
-        <div className="driver-layout" style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minHeight: "100vh", padding: "24px" }}>
-            <svg viewBox="0 0 24 24" width="56" height="56" fill="var(--driver-primary)" style={{ marginBottom: "16px" }}>
-                <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4z" />
-            </svg>
-            <h1 style={{ fontSize: "1.5rem", fontWeight: 800, marginBottom: "8px", color: "var(--driver-text)" }}>بوابة المندوبين</h1>
-            <p style={{ color: "var(--driver-text-muted)", marginBottom: "32px", fontSize: "0.95rem" }}>يسلمو للتوصيل</p>
+        <div className="login-container">
+            <div className="login-card">
+                <svg viewBox="0 0 24 24" width="70" height="70" fill="url(#green-gradient)" style={{ marginBottom: "20px", filter: "drop-shadow(0 4px 6px rgba(16,185,129,0.3))" }}>
+                    <defs>
+                        <linearGradient id="green-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#059669" />
+                            <stop offset="100%" stopColor="#10b981" />
+                        </linearGradient>
+                    </defs>
+                    <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" />
+                </svg>
+                <h1 style={{ fontSize: "1.8rem", fontWeight: 800, marginBottom: "8px", color: "var(--driver-text)", textAlign: "center" }}>بوابة المندوبين</h1>
+                <p style={{ color: "var(--driver-text-muted)", marginBottom: "32px", fontSize: "1.05rem", textAlign: "center", fontWeight: 600 }}>تطبيق يسلمو للتوصيل</p>
 
-            <form onSubmit={handleLogin} style={{ width: "100%", maxWidth: "360px", display: "flex", flexDirection: "column", gap: "16px" }}>
-                <input
-                    type="tel"
-                    placeholder="رقم الهاتف"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    dir="ltr"
-                    style={{ padding: "14px 16px", borderRadius: "12px", border: "1.5px solid var(--driver-border)", fontFamily: "inherit", fontSize: "1rem", outline: "none", textAlign: "right" }}
-                />
-                <input
-                    type="password"
-                    placeholder="كلمة السر"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    style={{ padding: "14px 16px", borderRadius: "12px", border: "1.5px solid var(--driver-border)", fontFamily: "inherit", fontSize: "1rem", outline: "none" }}
-                />
-                {error && (
-                    <div style={{ color: "#c62828", background: "#fff0f0", borderRadius: "8px", padding: "10px 14px", fontSize: "0.9rem" }}>{error}</div>
-                )}
-                <button
-                    type="submit"
-                    disabled={loading}
-                    style={{ padding: "14px", background: "var(--driver-primary)", color: "white", border: "none", borderRadius: "12px", fontFamily: "inherit", fontWeight: 700, fontSize: "1rem", cursor: "pointer", opacity: loading ? 0.7 : 1 }}
-                >
-                    {loading ? "جاري الدخول..." : "دخول"}
-                </button>
-            </form>
+                <form onSubmit={handleLogin} style={{ width: "100%", display: "flex", flexDirection: "column", gap: "20px" }}>
+                    <input
+                        type="tel"
+                        placeholder="رقم الهاتف"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        dir="ltr"
+                        className="login-input"
+                    />
+                    <input
+                        type="password"
+                        placeholder="كلمة السر"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="login-input"
+                        style={{ textAlign: "right", direction: "rtl" }}
+                    />
+                    {error && (
+                        <div style={{ color: "var(--driver-danger)", background: "rgba(239, 68, 68, 0.1)", borderRadius: "12px", padding: "12px 16px", fontSize: "0.95rem", fontWeight: 700, textAlign: "center", border: "1px solid rgba(239, 68, 68, 0.2)" }}>{error}</div>
+                    )}
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="login-btn"
+                        style={{ marginTop: "10px", opacity: loading ? 0.7 : 1 }}
+                    >
+                        {loading ? "جاري الدخول..." : "تسجيل الدخول"}
+                    </button>
+                </form>
+            </div>
         </div>
     );
 }
@@ -330,16 +341,22 @@ export default function DriverDashboard() {
         <div className="driver-layout">
             <header className="driver-header">
                 <div className="driver-title">
-                    <svg viewBox="0 0 24 24" width="24" height="24" fill="white">
+                    <svg viewBox="0 0 24 24" width="28" height="28" fill="url(#green-gradient-header)" style={{ filter: "drop-shadow(0 2px 4px rgba(16,185,129,0.2))" }}>
+                        <defs>
+                            <linearGradient id="green-gradient-header" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor="#059669" />
+                                <stop offset="100%" stopColor="#10b981" />
+                            </linearGradient>
+                        </defs>
                         <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" />
                     </svg>
                     بوابة المندوبين
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <div className="driver-status-badge">متصل 🟢</div>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <div className="driver-status-badge">متصل</div>
                     <button
                         onClick={() => auth.signOut().then(() => setUser(null))}
-                        style={{ background: "rgba(255,255,255,0.15)", border: "none", color: "white", padding: "4px 10px", borderRadius: "16px", cursor: "pointer", fontFamily: "inherit", fontSize: "0.8rem" }}
+                        className="driver-logout-btn"
                     >
                         خروج
                     </button>
@@ -347,41 +364,31 @@ export default function DriverDashboard() {
             </header>
 
             {/* ── Tab Bar ── */}
-            <div style={{ display: "flex", borderBottom: "2px solid #f1f5f9", background: "white", position: "sticky", top: 0, zIndex: 10 }}>
-                <button
-                    onClick={() => setActiveTab("available")}
-                    style={{
-                        flex: 1, padding: "14px", border: "none", background: "none", cursor: "pointer",
-                        fontFamily: "inherit", fontWeight: 700, fontSize: "0.92rem",
-                        color: activeTab === "available" ? "var(--driver-primary)" : "#94a3b8",
-                        borderBottom: activeTab === "available" ? "2px solid var(--driver-primary)" : "2px solid transparent",
-                        marginBottom: "-2px", transition: "all 0.2s",
-                    }}
-                >
-                    الطلبات المتاحة
-                    {orders.length > 0 && (
-                        <span style={{ marginRight: "6px", background: "var(--driver-primary)", color: "white", borderRadius: "10px", padding: "1px 7px", fontSize: "0.75rem" }}>
-                            {orders.length}
-                        </span>
-                    )}
-                </button>
-                <button
-                    onClick={() => setActiveTab("mine")}
-                    style={{
-                        flex: 1, padding: "14px", border: "none", background: "none", cursor: "pointer",
-                        fontFamily: "inherit", fontWeight: 700, fontSize: "0.92rem",
-                        color: activeTab === "mine" ? "#10b981" : "#94a3b8",
-                        borderBottom: activeTab === "mine" ? "2px solid #10b981" : "2px solid transparent",
-                        marginBottom: "-2px", transition: "all 0.2s",
-                    }}
-                >
-                    طلباتي
-                    {acceptedOrders.length > 0 && (
-                        <span style={{ marginRight: "6px", background: "#10b981", color: "white", borderRadius: "10px", padding: "1px 7px", fontSize: "0.75rem" }}>
-                            {acceptedOrders.length}
-                        </span>
-                    )}
-                </button>
+            <div className="driver-tabs-container">
+                <div className="driver-tabs">
+                    <button
+                        className={`driver-tab-btn ${activeTab === "available" ? "active" : ""}`}
+                        onClick={() => setActiveTab("available")}
+                    >
+                        المتاحة
+                        {orders.length > 0 && (
+                            <span className="tab-badge">
+                                {orders.length}
+                            </span>
+                        )}
+                    </button>
+                    <button
+                        className={`driver-tab-btn ${activeTab === "mine" ? "active" : ""}`}
+                        onClick={() => setActiveTab("mine")}
+                    >
+                        طلباتي
+                        {acceptedOrders.length > 0 && (
+                            <span className="tab-badge">
+                                {acceptedOrders.length}
+                            </span>
+                        )}
+                    </button>
+                </div>
             </div>
 
             <main className="driver-content">
@@ -391,38 +398,41 @@ export default function DriverDashboard() {
                     <>
                         <div className="section-heading">
                             الطلبات المتاحة ({orders.length})
-                            <span style={{ fontSize: "0.75rem", color: "var(--driver-primary)", marginRight: "8px", fontWeight: 600 }}>● مباشر</span>
+                            <span style={{ fontSize: "0.8rem", color: "var(--driver-primary)", marginRight: "8px", fontWeight: 700, background: "rgba(16, 185, 129, 0.1)", padding: "2px 8px", borderRadius: "8px" }}>● مباشر</span>
                         </div>
 
                         {orders.length === 0 ? (
-                            <div style={{ textAlign: "center", padding: "60px 20px", background: "white", borderRadius: "16px", border: "1px dashed #cbd5e1" }}>
-                                <svg viewBox="0 0 24 24" width="48" height="48" fill="#e2e8f0" style={{ marginBottom: "16px" }}>
+                            <div className="empty-state">
+                                <svg viewBox="0 0 24 24" width="60" height="60" fill="url(#green-gradient)" style={{ marginBottom: "16px", opacity: 0.8 }}>
                                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v-6H11v6zm0-8h2V7h-2v2z" />
                                 </svg>
-                                <div style={{ fontWeight: 600, color: "#64748b", fontSize: "1.1rem" }}>لا توجد طلبات جديدة حالياً</div>
-                                <div style={{ fontSize: "0.9rem", color: "#94a3b8", marginTop: "8px" }}>ستظهر الطلبات الجديدة هنا تلقائياً</div>
+                                <div style={{ fontWeight: 800, color: "var(--driver-text)", fontSize: "1.2rem" }}>لا توجد طلبات جديدة حالياً</div>
+                                <div style={{ fontSize: "0.95rem", color: "var(--driver-text-muted)", marginTop: "8px", fontWeight: 600 }}>ستظهر الطلبات الجديدة هنا تلقائياً</div>
                             </div>
                         ) : (
                             orders.map((order) => (
-                                <div key={order.id} className="order-card">
-                                    <div className="order-card-header">
-                                        <span className="order-time">
-                                            {order.createdAt ? new Date(order.createdAt).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : ""}
-                                        </span>
-                                        <span className="order-id">{order.orderNumber}</span>
-                                    </div>
-                                    <div className="order-customer">
-                                        <div className="customer-name">{order.customerName}</div>
-                                        <div className="customer-address">
-                                            <svg viewBox="0 0 24 24" width="16" height="16" fill="var(--driver-primary)" style={{ flexShrink: 0, marginTop: "2px" }}>
-                                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-                                            </svg>
-                                            {order.customerAddress}
+                                <div key={order.id} className="order-card-wrapper">
+                                    <div className="order-card">
+                                        <div className="order-card-header">
+                                            <span className="order-time">
+                                                <svg viewBox="0 0 24 24" width="16" height="16" fill="var(--driver-primary)"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+                                                {order.createdAt ? new Date(order.createdAt).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : ""}
+                                            </span>
+                                            <span className="order-id">#{order.orderNumber}</span>
                                         </div>
+                                        <div className="order-customer">
+                                            <div className="customer-name">{order.customerName}</div>
+                                            <div className="customer-address">
+                                                <svg viewBox="0 0 24 24" width="20" height="20" fill="var(--driver-primary)" style={{ flexShrink: 0, marginTop: "2px" }}>
+                                                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                                                </svg>
+                                                {order.customerAddress}
+                                            </div>
+                                        </div>
+                                        <button className="order-details-btn" onClick={() => setSelectedOrder(order)}>
+                                            عرض وتفاصيل الطلب
+                                        </button>
                                     </div>
-                                    <button className="order-details-btn" onClick={() => setSelectedOrder(order)}>
-                                        عرض التفاصيل وقبول الطلب
-                                    </button>
                                 </div>
                             ))
                         )}
@@ -437,69 +447,66 @@ export default function DriverDashboard() {
                         </div>
 
                         {acceptedOrders.length === 0 ? (
-                            <div style={{ textAlign: "center", padding: "60px 20px", background: "white", borderRadius: "16px", border: "1px dashed #cbd5e1" }}>
-                                <svg viewBox="0 0 24 24" width="48" height="48" fill="#e2e8f0" style={{ marginBottom: "16px" }}>
+                            <div className="empty-state">
+                                <svg viewBox="0 0 24 24" width="60" height="60" fill="url(#green-gradient)" style={{ marginBottom: "16px", opacity: 0.8 }}>
                                     <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
                                 </svg>
-                                <div style={{ fontWeight: 600, color: "#64748b", fontSize: "1.1rem" }}>لم تقبل أي طلب بعد</div>
-                                <div style={{ fontSize: "0.9rem", color: "#94a3b8", marginTop: "8px" }}>اقبل طلباً من تبويب الطلبات المتاحة</div>
+                                <div style={{ fontWeight: 800, color: "var(--driver-text)", fontSize: "1.2rem" }}>لم تقبل أي طلب بعد</div>
+                                <div style={{ fontSize: "0.95rem", color: "var(--driver-text-muted)", marginTop: "8px", fontWeight: 600 }}>اقبل طلباً من تبويب الطلبات المتاحة</div>
                             </div>
                         ) : (
                             acceptedOrders.map((order) => (
-                                <div key={order.id} style={{
-                                    background: "white", borderRadius: "20px",
-                                    boxShadow: "0 2px 16px rgba(16,185,129,0.1)",
-                                    border: "1.5px solid #a7f3d0", marginBottom: "16px", overflow: "hidden",
-                                }}>
+                                <div key={order.id} className="accepted-card">
                                     {/* Card Header */}
                                     <div style={{
-                                        background: "linear-gradient(135deg,#10b981,#059669)",
-                                        padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center",
+                                        background: "var(--driver-primary-gradient)",
+                                        padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center",
                                     }}>
-                                        <span style={{ color: "white", fontWeight: 800, fontSize: "1rem" }}>{order.orderNumber}</span>
-                                        <span style={{ background: "rgba(255,255,255,0.2)", color: "white", borderRadius: "10px", padding: "3px 10px", fontSize: "0.78rem", fontWeight: 600 }}>مقبول ✓</span>
+                                        <span style={{ color: "white", fontWeight: 800, fontSize: "1.1rem", fontFamily: "'Outfit', sans-serif" }}>#{order.orderNumber}</span>
+                                        <span style={{ background: "rgba(255,255,255,0.25)", color: "white", borderRadius: "12px", padding: "4px 12px", fontSize: "0.85rem", fontWeight: 700, boxShadow: "0 2px 10px rgba(0,0,0,0.1)" }}>مقبول ✓</span>
                                     </div>
 
-                                    <div style={{ padding: "18px" }}>
+                                    <div style={{ padding: "20px" }}>
                                         {/* Customer info */}
-                                        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "20px" }}>
                                             <div style={{
-                                                width: 44, height: 44, borderRadius: "50%",
-                                                background: "linear-gradient(135deg,#ff6b35,#ff8c5a)",
+                                                width: 48, height: 48, borderRadius: "50%",
+                                                background: "linear-gradient(135deg, #1e293b, #334155)",
                                                 display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                                                boxShadow: "0 4px 12px rgba(15, 23, 42, 0.2)"
                                             }}>
-                                                <svg viewBox="0 0 24 24" width="22" height="22" fill="white">
+                                                <svg viewBox="0 0 24 24" width="24" height="24" fill="white">
                                                     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                                                 </svg>
                                             </div>
                                             <div>
-                                                <div style={{ fontWeight: 800, fontSize: "1.05rem", color: "#1a1a2e" }}>{order.customerName}</div>
-                                                <a href={`tel:${order.customerPhone}`} style={{ color: "#10b981", fontWeight: 600, fontSize: "0.88rem", textDecoration: "none" }} dir="ltr">
+                                                <div style={{ fontWeight: 800, fontSize: "1.15rem", color: "var(--driver-text)", marginBottom: "4px" }}>{order.customerName}</div>
+                                                <a href={`tel:${order.customerPhone}`} style={{ color: "var(--driver-primary)", fontWeight: 700, fontSize: "0.95rem", textDecoration: "none", display: "inline-block", background: "rgba(16, 185, 129, 0.1)", padding: "2px 8px", borderRadius: "8px" }} dir="ltr">
                                                     📞 {order.customerPhone}
                                                 </a>
                                             </div>
                                         </div>
 
                                         {/* Address & map */}
-                                        <div style={{ background: "#f8fafc", borderRadius: "12px", padding: "12px 14px", marginBottom: "14px" }}>
-                                            <div style={{ fontSize: "0.75rem", color: "#94a3b8", fontWeight: 700, marginBottom: "6px" }}>📍 عنوان التوصيل</div>
-                                            <div style={{ fontWeight: 600, color: "#334155", fontSize: "0.92rem", marginBottom: order.locationCoords ? "10px" : 0 }}>
+                                        <div style={{ background: "rgba(248, 250, 252, 0.8)", borderRadius: "16px", padding: "16px", marginBottom: "16px", border: "1px solid rgba(0,0,0,0.03)" }}>
+                                            <div style={{ fontSize: "0.8rem", color: "var(--driver-text-muted)", fontWeight: 700, marginBottom: "8px" }}>📍 عنوان التوصيل</div>
+                                            <div style={{ fontWeight: 700, color: "var(--driver-text)", fontSize: "0.95rem", marginBottom: order.locationCoords ? "12px" : 0, lineHeight: "1.5" }}>
                                                 {order.customerAddress}
                                             </div>
                                             {order.locationDesc && (
-                                                <div style={{ fontSize: "0.85rem", color: "#64748b", marginBottom: order.locationCoords ? "10px" : 0 }}>{order.locationDesc}</div>
+                                                <div style={{ fontSize: "0.9rem", color: "var(--driver-text-muted)", marginBottom: order.locationCoords ? "12px" : 0, fontWeight: 600 }}>{order.locationDesc}</div>
                                             )}
                                             {order.locationCoords && (
                                                 <a
                                                     href={`https://www.google.com/maps?q=${order.locationCoords.lat},${order.locationCoords.lng}`}
                                                     target="_blank" rel="noopener noreferrer"
                                                     style={{
-                                                        display: "flex", alignItems: "center", gap: "6px", padding: "9px 12px",
-                                                        background: "#10b981", color: "white", borderRadius: "10px",
-                                                        textDecoration: "none", fontWeight: 700, fontSize: "0.85rem",
+                                                        display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", padding: "10px 14px",
+                                                        background: "var(--driver-primary-gradient)", color: "white", borderRadius: "12px",
+                                                        textDecoration: "none", fontWeight: 800, fontSize: "0.95rem", boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)"
                                                     }}
                                                 >
-                                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="white">
+                                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="white">
                                                         <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
                                                     </svg>
                                                     فتح في الخرائط
@@ -508,47 +515,47 @@ export default function DriverDashboard() {
                                         </div>
 
                                         {/* Items */}
-                                        <div style={{ marginBottom: order.notes ? "14px" : 0 }}>
-                                            <div style={{ fontSize: "0.75rem", color: "#94a3b8", fontWeight: 700, marginBottom: "8px", display: "flex", justifyContent: "space-between" }}>
+                                        <div style={{ marginBottom: order.notes ? "16px" : 0 }}>
+                                            <div style={{ fontSize: "0.8rem", color: "var(--driver-text-muted)", fontWeight: 700, marginBottom: "10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                                 <span>الطلبات</span>
-                                                <span style={{ background: "#f1f5f9", color: "#64748b", borderRadius: "8px", padding: "1px 8px" }}>{order.items?.length || 0} أصناف</span>
+                                                <span style={{ background: "rgba(15, 23, 42, 0.05)", color: "var(--driver-text-muted)", borderRadius: "8px", padding: "2px 10px" }}>{order.items?.length || 0} أصناف</span>
                                             </div>
                                             {order.items?.map((item, idx) => (
                                                 <div key={idx} style={{
                                                     display: "flex", justifyContent: "space-between", alignItems: "center",
-                                                    padding: "8px 0", borderBottom: idx < (order.items.length - 1) ? "1px solid #f1f5f9" : "none",
-                                                    fontSize: "0.92rem", color: "#334155",
+                                                    padding: "10px 0", borderBottom: idx < (order.items.length - 1) ? "1px dashed rgba(0,0,0,0.06)" : "none",
+                                                    fontSize: "0.95rem", color: "var(--driver-text)",
                                                 }}>
-                                                    <span style={{ background: "#f0fdf4", color: "#059669", borderRadius: "6px", padding: "2px 8px", fontWeight: 700, fontSize: "0.8rem" }}>× {item.quantity}</span>
-                                                    <span style={{ fontWeight: 600 }}>{item.name}</span>
+                                                    <span style={{ background: "rgba(16, 185, 129, 0.1)", color: "var(--driver-primary)", borderRadius: "8px", padding: "4px 10px", fontWeight: 800, fontSize: "0.85rem" }}>× {item.quantity}</span>
+                                                    <span style={{ fontWeight: 700 }}>{item.name}</span>
                                                 </div>
                                             ))}
                                         </div>
 
                                         {/* Notes */}
                                         {order.notes && (
-                                            <div style={{ background: "#fef3c7", borderRadius: "10px", padding: "10px 14px", fontSize: "0.88rem", color: "#92400e" }}>
+                                            <div style={{ background: "#fffbeb", borderRadius: "12px", padding: "12px 16px", fontSize: "0.95rem", color: "#b45309", fontWeight: 700, border: "1px solid #fde68a" }}>
                                                 📝 {order.notes}
                                             </div>
                                         )}
 
                                         {/* Verification: only shown when customerStatus is NOT set */}
                                         {!order.customerStatus && (
-                                            <div style={{ marginTop: "14px", background: "#fffbeb", borderRadius: "12px", padding: "14px", border: "1.5px solid #fde68a" }}>
-                                                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
-                                                    <span style={{ fontSize: "1.1rem" }}>⚠️</span>
-                                                    <span style={{ fontWeight: 700, color: "#92400e", fontSize: "0.88rem" }}>زبون غير موثق</span>
+                                            <div style={{ marginTop: "16px", background: "#fef2f2", borderRadius: "16px", padding: "16px", border: "1px solid #fecaca" }}>
+                                                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                                                    <span style={{ fontSize: "1.2rem" }}>⚠️</span>
+                                                    <span style={{ fontWeight: 800, color: "#b91c1c", fontSize: "0.95rem" }}>تأكيد حالة الزبون</span>
                                                 </div>
-                                                <div style={{ display: "flex", gap: "8px" }}>
+                                                <div style={{ display: "flex", gap: "10px" }}>
                                                     <button
                                                         onClick={() => handleVerifyCustomer(order, "verified")}
-                                                        style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "none", background: "#10b981", color: "white", fontFamily: "inherit", fontWeight: 700, fontSize: "0.88rem", cursor: "pointer" }}
+                                                        style={{ flex: 1, padding: "12px", borderRadius: "12px", border: "none", background: "#10b981", color: "white", fontFamily: "inherit", fontWeight: 800, fontSize: "0.95rem", cursor: "pointer", boxShadow: "0 4px 12px rgba(16, 185, 129, 0.2)" }}
                                                     >
                                                         ✅ حقيقي
                                                     </button>
                                                     <button
                                                         onClick={() => handleVerifyCustomer(order, "flagged")}
-                                                        style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "none", background: "#ef4444", color: "white", fontFamily: "inherit", fontWeight: 700, fontSize: "0.88rem", cursor: "pointer" }}
+                                                        style={{ flex: 1, padding: "12px", borderRadius: "12px", border: "none", background: "#ef4444", color: "white", fontFamily: "inherit", fontWeight: 800, fontSize: "0.95rem", cursor: "pointer", boxShadow: "0 4px 12px rgba(239, 68, 68, 0.2)" }}
                                                     >
                                                         🚫 احتيال
                                                     </button>
