@@ -250,24 +250,20 @@ export default function DriverDashboard() {
     useEffect(() => {
         if (!user) return;
 
-        const q = query(
-            collection(db, "orders"),
-            where("driverId", "==", user.uid),
-            where("status", "==", "accepted"),
-            orderBy("updatedAt", "desc")
-        );
+        // Listen for orders in both accepted and on_the_way states
+        const q1 = query(collection(db, "orders"), where("driverId", "==", user.uid), where("status", "==", "accepted"), orderBy("updatedAt", "desc"));
+        const q2 = query(collection(db, "orders"), where("driverId", "==", user.uid), where("status", "==", "on_the_way"), orderBy("updatedAt", "desc"));
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const mine = snapshot.docs.map((docSnap) => {
-                const data = docSnap.data();
-                return { id: docSnap.id, ...data, updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null };
-            });
-            setAcceptedOrders(mine);
-            // Auto-switch to "mine" tab when a new order appears
-            if (mine.length > 0) setActiveTab("mine");
-        }, (error) => { console.error("accepted onSnapshot error:", error); });
-
-        return () => unsubscribe();
+        const toObj = (docSnap) => { const d = docSnap.data(); return { id: docSnap.id, ...d, updatedAt: d.updatedAt?.toDate?.()?.toISOString() || null }; };
+        let snap1Docs = [], snap2Docs = [];
+        const merge = () => {
+            const all = [...snap1Docs, ...snap2Docs].sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""));
+            setAcceptedOrders(all);
+            if (all.length > 0) setActiveTab("mine");
+        };
+        const unsub1 = onSnapshot(q1, (s) => { snap1Docs = s.docs.map(toObj); merge(); }, console.error);
+        const unsub2 = onSnapshot(q2, (s) => { snap2Docs = s.docs.map(toObj); merge(); }, console.error);
+        return () => { unsub1(); unsub2(); };
     }, [user]);
 
     // Accept order via Firestore Transaction (prevents race conditions)
@@ -323,6 +319,22 @@ export default function DriverDashboard() {
         } catch (err) {
             console.error("verify error:", err);
             alert("حدث خطأ");
+        }
+    }, []);
+
+    // ── Update order status (on_the_way / delivered) ───────────────────────
+    const handleUpdateStatus = useCallback(async (orderId, newStatus) => {
+        const msg = newStatus === "on_the_way" ? "تحويل حالة الطلب إلى 'في الطريق'؟" : "هل أنت متأكد من تسليم الطلب للزبون بنجاح؟";
+        if (!confirm(msg)) return;
+
+        try {
+            await updateDoc(doc(db, "orders", orderId), {
+                status: newStatus,
+                updatedAt: serverTimestamp(),
+            });
+        } catch (err) {
+            console.error("status update error:", err);
+            alert("حدث خطأ أثناء تحديث حالة الطلب");
         }
     }, []);
 
@@ -539,26 +551,36 @@ export default function DriverDashboard() {
                                             </div>
                                         )}
 
+                                        {/* ── Status Actions ── */}
+                                        <div style={{ marginTop: "16px" }}>
+                                            {order.status === "accepted" && (
+                                                <button
+                                                    onClick={() => handleUpdateStatus(order.id, "on_the_way")}
+                                                    style={{ width: "100%", padding: "14px", borderRadius: "14px", border: "none", background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "white", fontFamily: "inherit", fontWeight: 800, fontSize: "1rem", cursor: "pointer", boxShadow: "0 4px 14px rgba(99,102,241,0.35)", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+                                                >
+                                                    🚗 أنا في الطريق
+                                                </button>
+                                            )}
+                                            {order.status === "on_the_way" && (
+                                                <button
+                                                    onClick={() => handleUpdateStatus(order.id, "delivered")}
+                                                    style={{ width: "100%", padding: "14px", borderRadius: "14px", border: "none", background: "linear-gradient(135deg,#10b981,#059669)", color: "white", fontFamily: "inherit", fontWeight: 800, fontSize: "1rem", cursor: "pointer", boxShadow: "0 4px 14px rgba(16,185,129,0.35)", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", animation: "pulse 2s infinite" }}
+                                                >
+                                                    ✅ تم التوصيل للزبون بنجاح
+                                                </button>
+                                            )}
+                                        </div>
+
                                         {/* Verification: only shown when customerStatus is NOT set */}
                                         {!order.customerStatus && (
-                                            <div style={{ marginTop: "16px", background: "#fef2f2", borderRadius: "16px", padding: "16px", border: "1px solid #fecaca" }}>
+                                            <div style={{ marginTop: "12px", background: "#fef2f2", borderRadius: "16px", padding: "16px", border: "1px solid #fecaca" }}>
                                                 <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
                                                     <span style={{ fontSize: "1.2rem" }}>⚠️</span>
                                                     <span style={{ fontWeight: 800, color: "#b91c1c", fontSize: "0.95rem" }}>تأكيد حالة الزبون</span>
                                                 </div>
                                                 <div style={{ display: "flex", gap: "10px" }}>
-                                                    <button
-                                                        onClick={() => handleVerifyCustomer(order, "verified")}
-                                                        style={{ flex: 1, padding: "12px", borderRadius: "12px", border: "none", background: "#10b981", color: "white", fontFamily: "inherit", fontWeight: 800, fontSize: "0.95rem", cursor: "pointer", boxShadow: "0 4px 12px rgba(16, 185, 129, 0.2)" }}
-                                                    >
-                                                        ✅ حقيقي
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleVerifyCustomer(order, "flagged")}
-                                                        style={{ flex: 1, padding: "12px", borderRadius: "12px", border: "none", background: "#ef4444", color: "white", fontFamily: "inherit", fontWeight: 800, fontSize: "0.95rem", cursor: "pointer", boxShadow: "0 4px 12px rgba(239, 68, 68, 0.2)" }}
-                                                    >
-                                                        🚫 احتيال
-                                                    </button>
+                                                    <button onClick={() => handleVerifyCustomer(order, "verified")} style={{ flex: 1, padding: "12px", borderRadius: "12px", border: "none", background: "#10b981", color: "white", fontFamily: "inherit", fontWeight: 800, fontSize: "0.95rem", cursor: "pointer" }}>✅ حقيقي</button>
+                                                    <button onClick={() => handleVerifyCustomer(order, "flagged")} style={{ flex: 1, padding: "12px", borderRadius: "12px", border: "none", background: "#ef4444", color: "white", fontFamily: "inherit", fontWeight: 800, fontSize: "0.95rem", cursor: "pointer" }}>🚫 احتيال</button>
                                                 </div>
                                             </div>
                                         )}

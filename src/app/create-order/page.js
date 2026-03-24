@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { db } from "@/lib/firebase";
-import { doc, onSnapshot, collection, query, where, limit, getDocs } from "firebase/firestore";
+import { doc, onSnapshot, collection, query, where, limit, getDocs, updateDoc } from "firebase/firestore";
 
 export default function CreateOrder() {
     const [userName, setUserName] = useState("");
@@ -200,6 +200,23 @@ export default function CreateOrder() {
         if (confirm("هل أنت متأكد من تفريغ جميع الحقول؟")) {
             setOrders("");
             setNotes("");
+        }
+    }
+
+    async function cancelOrder() {
+        if (!orderId) return;
+        if (!confirm("هل أنت متأكد من إلغاء الطلب؟")) return;
+        try {
+            await updateDoc(doc(db, "orders", orderId), { status: "cancelled" });
+            setTrackingStatus("idle");
+            setOrderNumber("");
+            setOrderId("");
+            setOrderItems([]);
+            if (unsubscribeRef.current) unsubscribeRef.current();
+            alert("تم إلغاء الطلب بنجاح");
+        } catch (err) {
+            console.error("Cancel error:", err);
+            alert("حدث خطأ أثناء إلغاء الطلب");
         }
     }
 
@@ -529,6 +546,17 @@ export default function CreateOrder() {
                     <p style={{ marginTop: "24px", color: "#94a3b8", fontSize: "0.82rem" }}>
                         لا تغلق هذه الشاشة حتى يقبل المندوب طلبك
                     </p>
+
+                    <button
+                        onClick={cancelOrder}
+                        style={{
+                            marginTop: "20px", padding: "12px 32px", borderRadius: "12px", border: "1.5px solid rgba(239, 68, 68, 0.4)",
+                            background: "rgba(239, 68, 68, 0.05)", color: "#ef4444", fontFamily: "inherit",
+                            fontWeight: 700, fontSize: "0.95rem", cursor: "pointer", transition: "all 0.2s"
+                        }}
+                    >
+                        إلغاء الطلب
+                    </button>
                 </div>
             )}
 
@@ -630,16 +658,17 @@ export default function CreateOrder() {
                         ))}
                     </div>
 
-                    <button
-                        onClick={() => { setTrackingStatus("idle"); setOrderItems([]); setOrders(""); setNotes(""); }}
-                        style={{
-                            padding: "13px 32px", borderRadius: "12px", border: "1.5px solid #e2e8f0",
-                            background: "white", color: "#64748b", fontFamily: "inherit",
-                            fontWeight: 600, fontSize: "0.95rem", cursor: "pointer",
-                        }}
-                    >
-                        إنشاء طلب جديد
-                    </button>
+                    <Link href="/track-order">
+                        <button
+                            style={{
+                                padding: "14px 32px", borderRadius: "14px", border: "none",
+                                background: "linear-gradient(135deg,#10b981,#059669)", color: "white", fontFamily: "inherit",
+                                fontWeight: 800, fontSize: "1rem", cursor: "pointer", boxShadow: "0 6px 20px rgba(16,185,129,0.3)"
+                            }}
+                        >
+                            📍 تتبع الطلب
+                        </button>
+                    </Link>
                 </div>
             )}
         </>

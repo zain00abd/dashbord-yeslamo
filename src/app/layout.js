@@ -1,4 +1,5 @@
 import "./globals.css";
+import BottomNav from "./components/BottomNav";
 
 export const metadata = {
   title: "يسلمو - توصيل الطلبات",
@@ -17,7 +18,10 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        {children}
+        <BottomNav />
+      </body>
     </html>
   );
 }
