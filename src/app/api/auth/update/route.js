@@ -19,26 +19,30 @@ export async function POST(request) {
         if (city !== undefined) updateData.city = city?.trim() || "";
         if (locationDesc !== undefined) updateData.locationDesc = locationDesc?.trim() || "";
         if (locationCoords !== undefined) updateData.locationCoords = locationCoords || null;
-        // Phone is intentionally not updatable here (it's tied to the Auth email)
 
         const docRef = adminDb.collection("users").doc(id);
-        const doc = await docRef.get();
+        const existingDoc = await docRef.get();
 
-        if (!doc.exists) {
+        if (!existingDoc.exists) {
             return NextResponse.json({ error: "المستخدم غير موجود" }, { status: 404 });
         }
 
         await docRef.update(updateData);
-        const updatedDoc = await docRef.get();
-        const profile = updatedDoc.data();
+
+        // Merge existing data with updates locally — no need for a second read
+        const existingData = existingDoc.data();
+        const merged = { ...existingData, ...updateData };
 
         return NextResponse.json({
             message: "تم تحديث البيانات بنجاح",
             user: {
                 id,
-                name: profile.name,
-                phone: profile.phone,
-                address: profile.address,
+                name: merged.name,
+                phone: merged.phone,
+                address: merged.address,
+                city: merged.city || "",
+                locationDesc: merged.locationDesc || "",
+                locationCoords: merged.locationCoords || null,
             },
         });
     } catch (error) {

@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function Login() {
     const router = useRouter();
@@ -23,27 +24,32 @@ export default function Login() {
 
         setLoading(true);
         try {
-            // 1. Derive email and sign in via Firebase Auth (password checked here)
+            // 1. Sign in via Firebase Auth (single network call)
             const email = `${phone.trim().replace(/\s/g, "")}@yaslamo.app`;
-            await signInWithEmailAndPassword(auth, email, password);
+            const cred = await signInWithEmailAndPassword(auth, email, password);
 
-            // 2. Fetch Firestore profile from our API route
-            const res = await fetch("/api/auth/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ phone: phone.trim(), password }),
-            });
+            // 2. Fetch profile directly from Firestore client-side (fast, no API roundtrip)
+            const profileSnap = await getDoc(doc(db, "users", cred.user.uid));
 
-            const data = await res.json();
-
-            if (!res.ok) {
-                setError(data.error || "حدث خطأ");
+            if (!profileSnap.exists()) {
+                setError("الملف الشخصي غير موجود");
                 setLoading(false);
                 return;
             }
 
-            // Save to localStorage for auto-login
-            localStorage.setItem("yaslamo_user", JSON.stringify(data.user));
+            const profile = profileSnap.data();
+
+            // Save to localStorage (including location data)
+            localStorage.setItem("yaslamo_user", JSON.stringify({
+                id: cred.user.uid,
+                name: profile.name,
+                phone: profile.phone,
+                address: profile.address,
+                email,
+                city: profile.city || "",
+                locationDesc: profile.locationDesc || "",
+                locationCoords: profile.locationCoords || null,
+            }));
             router.push("/");
         } catch (err) {
             console.error(err);

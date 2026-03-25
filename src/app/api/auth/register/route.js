@@ -61,6 +61,9 @@ export async function POST(request) {
                     name: name.trim(),
                     phone: phone.trim(),
                     address: address.trim(),
+                    city: city?.trim() || "",
+                    locationDesc: locationDesc?.trim() || "",
+                    locationCoords: locationCoords || null,
                 },
             },
             { status: 201 }
