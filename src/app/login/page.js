@@ -49,6 +49,7 @@ export default function Login() {
                 city: profile.city || "",
                 locationDesc: profile.locationDesc || "",
                 locationCoords: profile.locationCoords || null,
+                customerStatus: profile.customerStatus || null,
             }));
             router.push("/");
         } catch (err) {
