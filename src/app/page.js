@@ -14,7 +14,7 @@ export default function Home() {
     try {
       const userData = localStorage.getItem("yaslamo_user");
       if (userData) {
-        router.replace("/create-order");
+        router.replace("/home");
         return;
       }
     } catch (e) {}

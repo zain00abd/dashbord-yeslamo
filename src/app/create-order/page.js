@@ -144,13 +144,19 @@ export default function CreateOrder() {
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState("");
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-    async function submitOrder() {
+    function handleConfirmClick() {
         if (!userName.trim()) { alert("الرجاء تسجيل الدخول أولاً أو إنشاء حساب"); return; }
         if (!orders.trim()) { alert("الرجاء إدخال الطلبات المطلوبة"); return; }
         const items = parseOrders(orders);
         if (items.length === 0) { alert("الرجاء إدخال صنف واحد على الأقل"); return; }
+        setSubmitError("");
+        setShowConfirmModal(true);
+    }
 
+    async function submitOrder() {
+        const items = parseOrders(orders);
         setIsSubmitting(true);
         setSubmitError("");
 
@@ -168,7 +174,7 @@ export default function CreateOrder() {
                     customerAddress: activeCity ? `${activeCity}، ${activeDesc}` : address.trim(),
                     customerUid: userUid || null,
                     items,
-                    notes: notes.trim(),
+                    notes: "",
                     locationCoords: activeCoords || null,
                     locationDesc: activeDesc,
                 }),
@@ -179,6 +185,7 @@ export default function CreateOrder() {
             if (!res.ok) {
                 setSubmitError(data.error || "حدث خطأ في تقديم الطلب");
                 setIsSubmitting(false);
+                setShowConfirmModal(false);
                 return;
             }
 
@@ -188,9 +195,11 @@ export default function CreateOrder() {
             setOrderId(newOrderId);
             setOrderItems(items);
             setTrackingStatus("pending");
+            setShowConfirmModal(false);
             startTracking(newOrderId);
         } catch (error) {
             setSubmitError("تعذر الاتصال بالخادم. تأكد من اتصالك بالإنترنت.");
+            setShowConfirmModal(false);
         } finally {
             setIsSubmitting(false);
         }
@@ -199,7 +208,6 @@ export default function CreateOrder() {
     function clearForm() {
         if (confirm("هل أنت متأكد من تفريغ جميع الحقول؟")) {
             setOrders("");
-            setNotes("");
         }
     }
 
@@ -220,6 +228,12 @@ export default function CreateOrder() {
         }
     }
 
+    function getActiveLocationText() {
+        if (useCustomLoc) return `${modalCity}، ${modalDesc}`;
+        if (acctCity) return `${acctCity}، ${acctLocationDesc}`;
+        return address || "—";
+    }
+
     return (
         <>
             <div className="page-wrapper">
@@ -229,7 +243,7 @@ export default function CreateOrder() {
                         <Image src="/logo1.jpg" alt="يسلمو" width={36} height={36} />
                         <span>يسلمو</span>
                     </Link>
-                    <Link href="/" className="top-bar-back">
+                    <Link href="/home" className="top-bar-back">
                         ← الرئيسية
                     </Link>
                 </div>
@@ -237,211 +251,41 @@ export default function CreateOrder() {
                 {/* Form Content */}
                 <div className="content-area" style={{ paddingTop: "20px", paddingBottom: "30px" }}>
 
-
-
-                    {/* Location — two options */}
-                    <div className="form-section">
-                        <div className="section-title">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-                            </svg>
-                            <span>موقع التوصيل</span>
-                        </div>
-
-                        {/* Current active location display */}
-                        <div style={{
-                            background: "#f0fdf4", borderRadius: "12px", padding: "14px",
-                            border: "1.5px solid #a7f3d0", marginBottom: "12px",
-                        }}>
-                            <div style={{ fontSize: "0.78rem", color: "#059669", fontWeight: 700, marginBottom: "6px" }}>
-                                {useCustomLoc ? "📍 موقع مختلف محدد" : "📍 موقع حسابك"}
+                    {/* Orders — refreshed design */}
+                    <div className="order-section-card">
+                        <div className="order-section-header">
+                            <div className="order-section-icon">
+                                <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 7h10v2H7V7zm0 4h10v2H7v-2zm0 4h10v2H7v-2z" /></svg>
                             </div>
-                            <div style={{ fontWeight: 600, color: "#1a1a2e", fontSize: "0.95rem" }}>
-                                {useCustomLoc
-                                    ? `${modalCity}، ${modalDesc}`
-                                    : (acctCity ? `${acctCity}، ${acctLocationDesc}` : address || "—")}
+                            <div>
+                                <div className="order-section-title">الطلبات المرادة</div>
+                                <div className="order-section-subtitle">اكتب كل صنف في سطر منفصل</div>
                             </div>
+                            <span className="order-count-badge">{getItemsCountText()}</span>
                         </div>
 
-                        {/* Change location button */}
-                        <button
-                            type="button"
-                            onClick={() => setShowLocModal(true)}
-                            style={{
-                                width: "100%", padding: "12px", borderRadius: "12px",
-                                border: "1.5px solid #ff6b35", background: "white",
-                                color: "#ff6b35", fontFamily: "inherit", fontWeight: 700,
-                                fontSize: "0.95rem", cursor: "pointer",
-                                display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
-                            }}
-                        >
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-                            </svg>
-                            تحديد موقع مختلف
-                        </button>
-                    </div>
-
-                    {/* Location modal overlay */}
-                    {showLocModal && (
-                        <div style={{
-                            position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
-                            display: "flex", alignItems: "flex-end", justifyContent: "center",
-                            zIndex: 1000,
-                        }}
-                            onClick={() => setShowLocModal(false)}
-                        >
-                            <div style={{
-                                background: "white", borderRadius: "24px 24px 0 0",
-                                padding: "24px 20px 40px", width: "100%", maxWidth: "480px",
-                                maxHeight: "85vh", overflowY: "auto",
-                            }}
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <div style={{ fontWeight: 800, fontSize: "1.1rem", marginBottom: "20px", textAlign: "center" }}>
-                                    تحديد موقع مختلف
-                                </div>
-
-                                {/* GPS button */}
-                                <button
-                                    type="button"
-                                    onClick={getModalLocation}
-                                    disabled={modalGpsLoading}
-                                    style={{
-                                        width: "100%", display: "flex", alignItems: "center",
-                                        justifyContent: "center", gap: "10px", padding: "14px",
-                                        borderRadius: "12px", border: "2px dashed",
-                                        borderColor: modalGpsDone ? "#10b981" : "#ff6b35",
-                                        background: modalGpsDone ? "#f0fdf4" : "#fff8f6",
-                                        color: modalGpsDone ? "#065f46" : "#c2410c",
-                                        fontFamily: "inherit", fontWeight: 700, fontSize: "1rem",
-                                        cursor: modalGpsLoading ? "wait" : "pointer",
-                                        marginBottom: "12px",
-                                    }}
-                                >
-                                    {modalGpsDone ? "✅" : "📍"}
-                                    {modalGpsLoading
-                                        ? "جاري تحديد موقعك..."
-                                        : modalGpsDone
-                                            ? `تم (${modalCoords.lat.toFixed(4)}, ${modalCoords.lng.toFixed(4)})`
-                                            : "تحديد موقعي تلقائياً أولاً"}
-                                </button>
-
-                                {modalGpsError && (
-                                    <div style={{ color: "#c62828", fontSize: "0.85rem", marginBottom: "10px", padding: "8px 12px", background: "#fff0f0", borderRadius: "8px" }}>
-                                        {modalGpsError}
-                                    </div>
-                                )}
-
-                                {/* Fields — shown only after GPS */}
-                                {modalGpsDone && (
-                                    <>
-                                        <input
-                                            type="text"
-                                            className="form-input"
-                                            placeholder="المدينة"
-                                            value={modalCity}
-                                            onChange={(e) => setModalCity(e.target.value)}
-                                            style={{ marginBottom: "12px" }}
-                                        />
-                                        <textarea
-                                            className="form-input"
-                                            style={{ minHeight: "80px", resize: "vertical" }}
-                                            placeholder="عنوان تفصيلي: الحي، الشارع، بجانب أي معلم، رقم البناء..."
-                                            value={modalDesc}
-                                            onChange={(e) => setModalDesc(e.target.value)}
-                                        />
-                                    </>
-                                )}
-
-                                <div style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowLocModal(false)}
-                                        style={{
-                                            flex: 1, padding: "12px", borderRadius: "12px",
-                                            border: "1.5px solid #e2e8f0", background: "white",
-                                            fontFamily: "inherit", fontWeight: 600, cursor: "pointer", color: "#64748b",
-                                        }}
-                                    >
-                                        إلغاء
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={confirmCustomLocation}
-                                        style={{
-                                            flex: 2, padding: "12px", borderRadius: "12px",
-                                            border: "none", background: "#ff6b35", color: "white",
-                                            fontFamily: "inherit", fontWeight: 700, cursor: "pointer",
-                                        }}
-                                    >
-                                        تأكيد الموقع
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Orders */}
-                    <div className="form-section">
-                        <div className="section-title">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 7h10v2H7V7zm0 4h10v2H7v-2zm0 4h10v2H7v-2z" />
-                            </svg>
-                            <span>الطلبات المرادة</span>
-                        </div>
-
-                        <div className="form-label">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
-                            </svg>
-                            اكتب طلباتك هنا (لكل طلب سطر منفصل)
+                        <div className="order-write-label">
+                            <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" /></svg>
+                            اكتب طلباتك هنا
                         </div>
 
                         <textarea
-                            className="form-textarea"
-                            placeholder={`مثال:\nبيتزا عائلية - 2\nمشروب غازي - 3\nبطاطس مقلية كبيرة - 1`}
+                            className="order-textarea"
+                            placeholder={`بيتزا عائلية - 2\nمشروب غازي - 3\nبطاطس مقلية كبيرة - 1\n\nاكتب كل صنف في سطر...`}
                             value={orders}
                             onChange={(e) => setOrders(e.target.value)}
                         />
 
-                        <div className="form-hint">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
-                            </svg>
-                            <div>
-                                <span>نصيحة:</span> استخدم شرطة (-) للفصل بين اسم الصنف والكمية
-                            </div>
+                        <div className="order-hint">
+                            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" /></svg>
+                            استخدم شرطة (-) للفصل بين الاسم والكمية
                         </div>
-                    </div>
-
-                    {/* Notes */}
-                    <div className="form-section">
-                        <div className="section-title">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-                            </svg>
-                            <span>ملاحظات إضافية</span>
-                        </div>
-                        <textarea
-                            className="form-input"
-                            style={{ minHeight: "70px", resize: "vertical" }}
-                            placeholder="يرجى الاتصال قبل الوصول... (اختياري)"
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                        />
-                    </div>
-
-                    {/* Quick Summary */}
-                    <div className="quick-summary">
-                        <span className="summary-text">عدد الأصناف</span>
-                        <span className="items-badge">{getItemsCountText()}</span>
                     </div>
 
                     {submitError && (
                         <div style={{
                             background: "#fff0f0", border: "1px solid #ffcdd2", borderRadius: "12px",
-                            padding: "12px 16px", marginBottom: "20px", color: "#c62828", fontSize: "0.9rem",
+                            padding: "12px 16px", marginBottom: "16px", color: "#c62828", fontSize: "0.9rem",
                             display: "flex", alignItems: "center", gap: "8px",
                         }}>
                             <svg viewBox="0 0 24 24" width="18" height="18" fill="#c62828">
@@ -451,27 +295,226 @@ export default function CreateOrder() {
                         </div>
                     )}
 
-                    {/* Actions */}
-                    <div className="actions-row">
-                        <button className="btn btn-secondary" onClick={clearForm} disabled={isSubmitting}>
-                            <svg viewBox="0 0 24 24" fill="#ff6b35">
-                                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
-                            </svg>
-                            تفريغ
-                        </button>
-                        <button className="btn btn-primary" onClick={submitOrder} disabled={isSubmitting} style={{ opacity: isSubmitting ? 0.7 : 1 }}>
-                            {isSubmitting ? "جاري الإرسال..." : (
-                                <>
-                                    <svg viewBox="0 0 24 24" fill="white">
-                                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
-                                    </svg>
-                                    تأكيد الطلب
-                                </>
-                            )}
-                        </button>
-                    </div>
+                    {/* Confirm button — prominent full width */}
+                    <button className="order-confirm-btn" onClick={handleConfirmClick}>
+                        <svg viewBox="0 0 24 24" fill="white">
+                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                        </svg>
+                        تأكيد الطلب
+                    </button>
                 </div>
             </div>
+
+            {/* ── CONFIRMATION MODAL — Location check before submit ── */}
+            {showConfirmModal && (
+                <div style={{
+                    position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
+                    display: "flex", alignItems: "flex-end", justifyContent: "center",
+                    zIndex: 1000,
+                }}
+                    onClick={() => setShowConfirmModal(false)}
+                >
+                    <div style={{
+                        background: "white", borderRadius: "24px 24px 0 0",
+                        padding: "24px 20px 36px", width: "100%", maxWidth: "480px",
+                        maxHeight: "85vh", overflowY: "auto",
+                    }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div style={{ fontWeight: 800, fontSize: "1.15rem", marginBottom: "20px", textAlign: "center", color: "#1a1a2e" }}>
+                            تأكيد موقع التوصيل
+                        </div>
+
+                        {/* Current location display */}
+                        <div style={{
+                            background: "#f0fdf4", borderRadius: "14px", padding: "16px",
+                            border: "1.5px solid #a7f3d0", marginBottom: "14px",
+                        }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="#059669">
+                                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                                </svg>
+                                <span style={{ fontSize: "0.8rem", color: "#059669", fontWeight: 700 }}>
+                                    {useCustomLoc ? "موقع مختلف محدد" : "موقع حسابك"}
+                                </span>
+                            </div>
+                            <div style={{ fontWeight: 600, color: "#1a1a2e", fontSize: "0.95rem", lineHeight: 1.6 }}>
+                                {getActiveLocationText()}
+                            </div>
+                        </div>
+
+                        {/* Change location button */}
+                        <button
+                            type="button"
+                            onClick={() => { setShowConfirmModal(false); setShowLocModal(true); }}
+                            style={{
+                                width: "100%", padding: "12px", borderRadius: "12px",
+                                border: "1.5px solid #ff6b35", background: "white",
+                                color: "#ff6b35", fontFamily: "inherit", fontWeight: 700,
+                                fontSize: "0.92rem", cursor: "pointer",
+                                display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                                marginBottom: "18px",
+                            }}
+                        >
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                            </svg>
+                            تغيير الموقع
+                        </button>
+
+                        {/* Order summary in confirm modal */}
+                        <div style={{
+                            background: "#fafafa", borderRadius: "12px", padding: "14px",
+                            border: "1px solid #f0f0f0", marginBottom: "18px",
+                        }}>
+                            <div style={{ fontSize: "0.78rem", color: "#888", fontWeight: 700, marginBottom: "8px" }}>
+                                ملخص الطلب
+                            </div>
+                            {parseOrders(orders).map((item, i) => (
+                                <div key={i} style={{
+                                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                                    padding: "6px 0", borderBottom: i < parseOrders(orders).length - 1 ? "1px solid #f0f0f0" : "none",
+                                    fontSize: "0.88rem", color: "#334155",
+                                }}>
+                                    <span style={{ background: "#fff0eb", color: "#ff6b35", borderRadius: "6px", padding: "2px 8px", fontSize: "0.78rem", fontWeight: 700 }}>
+                                        × {item.quantity}
+                                    </span>
+                                    <span>{item.name}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Confirm / Cancel buttons */}
+                        <div style={{ display: "flex", gap: "10px" }}>
+                            <button
+                                type="button"
+                                onClick={() => setShowConfirmModal(false)}
+                                style={{
+                                    flex: 1, padding: "14px", borderRadius: "12px",
+                                    border: "1.5px solid #e2e8f0", background: "white",
+                                    fontFamily: "inherit", fontWeight: 600, cursor: "pointer", color: "#64748b",
+                                    fontSize: "0.95rem",
+                                }}
+                            >
+                                رجوع
+                            </button>
+                            <button
+                                type="button"
+                                onClick={submitOrder}
+                                disabled={isSubmitting}
+                                style={{
+                                    flex: 2, padding: "14px", borderRadius: "12px",
+                                    border: "none", background: "#ff6b35", color: "white",
+                                    fontFamily: "inherit", fontWeight: 800, cursor: "pointer",
+                                    fontSize: "1rem", opacity: isSubmitting ? 0.7 : 1,
+                                    boxShadow: "0 6px 20px rgba(255,107,53,0.3)",
+                                }}
+                            >
+                                {isSubmitting ? "جاري الإرسال..." : "إرسال الطلب"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Location change modal */}
+            {showLocModal && (
+                <div style={{
+                    position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
+                    display: "flex", alignItems: "flex-end", justifyContent: "center",
+                    zIndex: 1000,
+                }}
+                    onClick={() => setShowLocModal(false)}
+                >
+                    <div style={{
+                        background: "white", borderRadius: "24px 24px 0 0",
+                        padding: "24px 20px 40px", width: "100%", maxWidth: "480px",
+                        maxHeight: "85vh", overflowY: "auto",
+                    }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div style={{ fontWeight: 800, fontSize: "1.1rem", marginBottom: "20px", textAlign: "center" }}>
+                            تحديد موقع مختلف
+                        </div>
+
+                        {/* GPS button */}
+                        <button
+                            type="button"
+                            onClick={getModalLocation}
+                            disabled={modalGpsLoading}
+                            style={{
+                                width: "100%", display: "flex", alignItems: "center",
+                                justifyContent: "center", gap: "10px", padding: "14px",
+                                borderRadius: "12px", border: "2px dashed",
+                                borderColor: modalGpsDone ? "#10b981" : "#ff6b35",
+                                background: modalGpsDone ? "#f0fdf4" : "#fff8f6",
+                                color: modalGpsDone ? "#065f46" : "#c2410c",
+                                fontFamily: "inherit", fontWeight: 700, fontSize: "1rem",
+                                cursor: modalGpsLoading ? "wait" : "pointer",
+                                marginBottom: "12px",
+                            }}
+                        >
+                            {modalGpsDone ? "✅" : "📍"}
+                            {modalGpsLoading
+                                ? "جاري تحديد موقعك..."
+                                : modalGpsDone
+                                    ? `تم (${modalCoords.lat.toFixed(4)}, ${modalCoords.lng.toFixed(4)})`
+                                    : "تحديد موقعي تلقائياً أولاً"}
+                        </button>
+
+                        {modalGpsError && (
+                            <div style={{ color: "#c62828", fontSize: "0.85rem", marginBottom: "10px", padding: "8px 12px", background: "#fff0f0", borderRadius: "8px" }}>
+                                {modalGpsError}
+                            </div>
+                        )}
+
+                        {modalGpsDone && (
+                            <>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    placeholder="المدينة"
+                                    value={modalCity}
+                                    onChange={(e) => setModalCity(e.target.value)}
+                                    style={{ marginBottom: "12px" }}
+                                />
+                                <textarea
+                                    className="form-input"
+                                    style={{ minHeight: "80px", resize: "vertical" }}
+                                    placeholder="عنوان تفصيلي: الحي، الشارع، بجانب أي معلم، رقم البناء..."
+                                    value={modalDesc}
+                                    onChange={(e) => setModalDesc(e.target.value)}
+                                />
+                            </>
+                        )}
+
+                        <div style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
+                            <button
+                                type="button"
+                                onClick={() => setShowLocModal(false)}
+                                style={{
+                                    flex: 1, padding: "12px", borderRadius: "12px",
+                                    border: "1.5px solid #e2e8f0", background: "white",
+                                    fontFamily: "inherit", fontWeight: 600, cursor: "pointer", color: "#64748b",
+                                }}
+                            >
+                                إلغاء
+                            </button>
+                            <button
+                                type="button"
+                                onClick={confirmCustomLocation}
+                                style={{
+                                    flex: 2, padding: "12px", borderRadius: "12px",
+                                    border: "none", background: "#ff6b35", color: "white",
+                                    fontFamily: "inherit", fontWeight: 700, cursor: "pointer",
+                                }}
+                            >
+                                تأكيد الموقع
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* ── TRACKING SCREEN — Pending ───────────────────────── */}
             {trackingStatus === "pending" && (
