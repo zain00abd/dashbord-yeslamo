@@ -1458,6 +1458,122 @@ body:has(.bottom-nav) > div:not(.bottom-nav) {
   gap: 14px;
 }
 
+/* شريط أصناف البقالة — تمرير تلقائي بأسلوب شريط الأخبار */
+.home-v2-cat-wrap {
+  margin-inline: -16px;
+  width: calc(100% + 32px);
+  max-width: none;
+}
+
+.home-v2-cat-strip {
+  overflow: hidden;
+  width: 100%;
+  direction: ltr;
+  padding-block: 10px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 243, 237, 0.95) 0%,
+    rgba(255, 255, 255, 0.98) 45%,
+    rgba(255, 243, 237, 0.95) 100%
+  );
+  border-block: 1px solid rgba(255, 107, 53, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.home-v2-cat-track {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 0;
+  width: max-content;
+  direction: ltr;
+  will-change: transform;
+}
+
+/* تكرار لانهائي: المسافة = عرض نسخة واحدة بالبكسل (يُقاس في JS) لتفادي خطأ translate(-50%) */
+.home-v2-cat-track--ready {
+  animation: home-v2-cat-marquee 48s linear infinite;
+}
+
+.home-v2-cat-strip:hover .home-v2-cat-track--ready {
+  animation-play-state: paused;
+}
+
+.home-v2-cat-seq {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  align-items: flex-start;
+}
+
+@keyframes home-v2-cat-marquee {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  100% {
+    transform: translate3d(calc(-1 * var(--marquee-seq-w, 0px)), 0, 0);
+  }
+}
+
+.home-v2-cat-item {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding-inline: 14px;
+  min-width: 4.5rem;
+  direction: rtl;
+  text-align: center;
+}
+
+.home-v2-cat-ico {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, rgba(255, 107, 53, 0.12) 0%, rgba(255, 143, 92, 0.18) 100%);
+  border: 1px solid rgba(255, 107, 53, 0.2);
+  color: var(--primary-dark);
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.08);
+}
+
+.home-v2-cat-svg {
+  width: 24px;
+  height: 24px;
+  stroke-width: 2;
+}
+
+.home-v2-cat-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--primary-dark);
+  max-width: 5.2rem;
+  letter-spacing: 0.01em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-v2-cat-strip {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .home-v2-cat-track--ready {
+    animation: none;
+  }
+
+  .home-v2-cat-track {
+    padding-inline: 6px;
+  }
+}
+
 /* بطاقة البطل: خلفية برتقالية + نص فاتح — زر أبيض يبرز */
 .home-v2-hero {
   position: relative;
