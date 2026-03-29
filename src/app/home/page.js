@@ -5,9 +5,69 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 
+/** أيقونات خطّية بلون موحّد (currentColor) */
+function IconStroke({ children, className = "" }) {
+    return (
+        <svg
+            className={className}
+            viewBox="0 0 24 24"
+            width="1em"
+            height="1em"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.75"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+        >
+            {children}
+        </svg>
+    );
+}
+
+const STATUS_LABEL = {
+    pending: "قيد الانتظار",
+    accepted: "تم قبول الطلب",
+    on_the_way: "في الطريق",
+    delivered: "تم التوصيل",
+    cancelled: "ملغى",
+};
+
+/** بيانات موقع التوصيل من الحساب */
+function parseDeliveryLocation(parsed) {
+    const city = typeof parsed.city === "string" ? parsed.city.trim() : "";
+    const detail = typeof parsed.locationDesc === "string" ? parsed.locationDesc.trim() : "";
+    const fallback = typeof parsed.address === "string" ? parsed.address.trim() : "";
+    const line2 = detail || fallback;
+    if (!city && !line2) return null;
+    return { city, detail: line2 };
+}
+
+function formatLocationLine(loc) {
+    if (!loc) return "";
+    if (loc.city && loc.detail && loc.detail !== loc.city) return `${loc.city} · ${loc.detail}`;
+    return loc.city || loc.detail || "";
+}
+
+function formatRecentWhen(iso) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffDays = Math.floor(diffMs / 864e5);
+    if (diffDays < 0) return d.toLocaleDateString("ar-EG", { day: "numeric", month: "short" });
+    if (diffDays === 0) return "اليوم";
+    if (diffDays === 1) return "أمس";
+    if (diffDays < 7) return `منذ ${diffDays} أيام`;
+    return d.toLocaleDateString("ar-EG", { day: "numeric", month: "short", year: "numeric" });
+}
+
 export default function HomePage() {
     const [userName, setUserName] = useState("");
+    const [userUid, setUserUid] = useState("");
+    const [deliveryLocation, setDeliveryLocation] = useState(null);
     const [loaded, setLoaded] = useState(false);
+    const [lastOrder, setLastOrder] = useState(null);
     const router = useRouter();
 
     useEffect(() => {
@@ -18,54 +78,47 @@ export default function HomePage() {
                 return;
             }
             const parsed = JSON.parse(userData);
-            setUserName(parsed.name || "");
+            if (parsed === null || typeof parsed !== "object") {
+                router.replace("/login");
+                return;
+            }
+            const name =
+                typeof parsed.name === "string"
+                    ? parsed.name
+                    : parsed.name != null
+                      ? String(parsed.name)
+                      : "";
+            const uid = typeof parsed.id === "string" ? parsed.id : "";
+            const loc = parseDeliveryLocation(parsed);
+            queueMicrotask(() => {
+                setUserName(name);
+                setUserUid(uid);
+                setDeliveryLocation(loc);
+                setLoaded(true);
+            });
         } catch (e) {
             router.replace("/login");
-            return;
         }
-        setLoaded(true);
-    }, []);
+    }, [router]);
+
+    useEffect(() => {
+        if (!loaded || !userUid) return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await fetch(`/api/orders/recent?uid=${encodeURIComponent(userUid)}`);
+                const data = await res.json();
+                if (!cancelled && data.order) setLastOrder(data.order);
+            } catch {
+                /* ignore */
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [loaded, userUid]);
 
     if (!loaded) return null;
-
-    const quickActions = [
-        {
-            href: "/create-order",
-            label: "طلب جديد",
-            desc: "اطلب توصيل الآن",
-            icon: "M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm6 16H6V8h2v2c0 .55.45 1 1 1s1-.45 1-1V8h4v2c0 .55.45 1 1 1s1-.45 1-1V8h2v12z",
-        },
-        {
-            href: "/track-order",
-            label: "طلباتي",
-            desc: "تتبع طلباتك الحالية",
-            icon: "M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z",
-        },
-        {
-            href: "/account",
-            label: "حسابي",
-            desc: "إعدادات الحساب",
-            icon: "M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z",
-        },
-    ];
-
-    const features = [
-        {
-            label: "توصيل سريع",
-            desc: "30 دقيقة متوسط التوصيل",
-            icon: "M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43L16.29 22l2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43L22 16.29z",
-        },
-        {
-            label: "دفع عند الاستلام",
-            desc: "لا حاجة للدفع مسبقاً",
-            icon: "M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z",
-        },
-        {
-            label: "تتبع مباشر",
-            desc: "تعرف أين طلبك لحظياً",
-            icon: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
-        },
-    ];
 
     function getGreeting() {
         const hour = new Date().getHours();
@@ -75,74 +128,104 @@ export default function HomePage() {
     }
 
     return (
-        <div className="page-wrapper">
-            {/* Header */}
-            <div className="home-header">
-                <div className="home-header-content">
-                    <div className="home-greeting">
-                        <div className="home-greeting-icon">
-                            <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
+        <div className="page-wrapper home-page home-v2">
+            <header className="home-v2-topbar">
+                <div className="home-v2-topbar-row">
+                    <div className="home-v2-user">
+                        <div className="home-v2-avatar">
+                            <IconStroke className="home-v2-avatar-svg">
+                                <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </IconStroke>
                         </div>
-                        <div>
-                            <div className="home-greeting-text">{getGreeting()}</div>
-                            <div className="home-greeting-name">{userName}</div>
+                        <div className="home-v2-user-text">
+                            <span className="home-v2-greet">{getGreeting()}</span>
+                            <span className="home-v2-name">{userName}</span>
                         </div>
                     </div>
-                    <Link href="/" className="home-logo-link">
-                        <Image src="/logo1.jpg" alt="يسلمو" width={42} height={42} className="home-logo-img" priority />
+                    <Link href="/" className="home-v2-brand">
+                        <Image src="/logo1.jpg" alt="يسلمو" width={48} height={48} className="home-v2-logo" priority />
                     </Link>
                 </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="home-content">
-                {/* CTA */}
-                <div className="home-cta-wrapper">
-                    <div className="home-cta-phrase">
-                        <svg viewBox="0 0 24 24"><path d="M18 18.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5-1.5.67-1.5 1.5.67 1.5 1.5 1.5zM19.5 9.5L21 12h-5V6.5h2.67L19.5 9.5zM6 18.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5-1.5.67-1.5 1.5.67 1.5 1.5 1.5zM20 8l3 4v5h-2c0 1.66-1.34 3-3 3s-3-1.34-3-3H9c0 1.66-1.34 3-3 3s-3-1.34-3-3H1V6c0-1.11.89-2 2-2h14v4h3zM3 12h5V6H3v6z" /></svg>
-                        جاهز تطلب؟ نوصلك لباب بيتك!
+                {deliveryLocation ? (
+                    <div className="home-v2-location" role="region" aria-label="موقع التوصيل">
+                        <IconStroke className="home-v2-location-icon">
+                            <path d="M12 22s7-4.5 7-10a7 7 0 10-14 0c0 5.5 7 10 7 10z" />
+                            <path d="M12 13a3 3 0 100-6 3 3 0 000 6z" />
+                        </IconStroke>
+                        <span className="home-v2-location-text" title={formatLocationLine(deliveryLocation)}>
+                            {formatLocationLine(deliveryLocation)}
+                        </span>
                     </div>
-                    <Link href="/create-order" className="home-cta-btn">
-                        <svg viewBox="0 0 24 24"><path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm6 16H6V8h2v2c0 .55.45 1 1 1s1-.45 1-1V8h4v2c0 .55.45 1 1 1s1-.45 1-1V8h2v12z" /></svg>
-                        اطلب الآن
-                    </Link>
-                </div>
+                ) : null}
+            </header>
 
-                <div className="home-section-label" style={{ marginTop: "24px" }}>
-                    <svg viewBox="0 0 24 24"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z" /></svg>
-                    إجراءات سريعة
-                </div>
-                <div className="home-actions-grid">
-                    {quickActions.map((action, i) => (
-                        <Link href={action.href} key={i} className="home-action-card" style={{ animationDelay: `${i * 0.1}s` }}>
-                            <div className="home-action-icon">
-                                <svg viewBox="0 0 24 24"><path d={action.icon} /></svg>
+            <main className="home-v2-main">
+                <div className="home-v2-shell">
+                    <section className="home-v2-hero" aria-labelledby="home-v2-title">
+                        <div className="home-v2-hero-inner">
+                            <p className="home-v2-eyebrow">توصيل من البقالة</p>
+                            <h1 id="home-v2-title" className="home-v2-title">
+                                طلبك يبدأ من هنا
+                            </h1>
+                            <Link href="/create-order" className="home-v2-cta">
+                                <span className="home-v2-cta-inner">
+                                    <IconStroke className="home-v2-cta-icon">
+                                        <path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                    </IconStroke>
+                                    ابدأ الطلب
+                                </span>
+                                <IconStroke className="home-v2-cta-chevron">
+                                    <path d="M15 18l-6-6 6-6" />
+                                </IconStroke>
+                            </Link>
+                        </div>
+                    </section>
+
+                    {lastOrder ? (
+                        <Link
+                            href="/track-order"
+                            className={`home-v2-last${lastOrder.status === "delivered" ? " home-v2-last--delivered" : ""}`}
+                        >
+                            <div className="home-v2-last-media">
+                                {lastOrder.status === "delivered" ? (
+                                    <IconStroke className="home-v2-last-ico">
+                                        <path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </IconStroke>
+                                ) : (
+                                    <IconStroke className="home-v2-last-ico">
+                                        <path d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                                    </IconStroke>
+                                )}
                             </div>
-                            <div className="home-action-label">{action.label}</div>
-                            <div className="home-action-desc">{action.desc}</div>
+                            <div className="home-v2-last-body">
+                                <div className="home-v2-last-top">
+                                    <span className="home-v2-last-label">آخر طلب</span>
+                                    <span className="home-v2-last-num">#{lastOrder.orderNumber}</span>
+                                </div>
+                                <div className="home-v2-last-meta">
+                                    <span className="home-v2-last-pill">{STATUS_LABEL[lastOrder.status] || lastOrder.status}</span>
+                                    <span className="home-v2-last-when">{formatRecentWhen(lastOrder.createdAt)}</span>
+                                </div>
+                                {lastOrder.itemsPreview ? (
+                                    <p className="home-v2-last-preview">{lastOrder.itemsPreview}</p>
+                                ) : lastOrder.itemsCount > 0 ? (
+                                    <p className="home-v2-last-preview">{lastOrder.itemsCount} أصناف</p>
+                                ) : null}
+                            </div>
+                            <IconStroke className="home-v2-last-arrow">
+                                <path d="M15.75 19.5L8.25 12l7.5-7.5" />
+                            </IconStroke>
                         </Link>
-                    ))}
-                </div>
+                    ) : null}
 
-                {/* Features */}
-                <div className="home-section-label" style={{ marginTop: "28px" }}>
-                    <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" /></svg>
-                    لماذا يسلمو؟
+                    <p className="home-v2-foot">
+                        <IconStroke className="home-v2-foot-icon">
+                            <path d="M12 16v-4m0-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </IconStroke>
+                        يمكنك متابعة الطلبات من «طلباتي» في الشريط السفلي.
+                    </p>
                 </div>
-                <div className="home-features-list">
-                    {features.map((f, i) => (
-                        <div key={i} className="home-feature-row" style={{ animationDelay: `${0.3 + i * 0.1}s` }}>
-                            <div className="home-feature-icon">
-                                <svg viewBox="0 0 24 24"><path d={f.icon} /></svg>
-                            </div>
-                            <div className="home-feature-info">
-                                <div className="home-feature-label">{f.label}</div>
-                                <div className="home-feature-desc">{f.desc}</div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
+            </main>
         </div>
     );
 }

@@ -24,6 +24,7 @@ export default function CreateOrder() {
 
     // Different-location modal
     const [showLocModal, setShowLocModal] = useState(false);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [useCustomLoc, setUseCustomLoc] = useState(false);
     const [modalCoords, setModalCoords] = useState(null);
     const [modalCity, setModalCity] = useState("");
@@ -111,6 +112,7 @@ export default function CreateOrder() {
         if (!modalDesc.trim()) { setModalGpsError("يرجى إدخال العنوان التفصيلي"); return; }
         setUseCustomLoc(true);
         setShowLocModal(false);
+        setShowConfirmModal(true);
     }
 
     // Start listening to the order doc in real-time
@@ -146,7 +148,6 @@ export default function CreateOrder() {
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState("");
-    const [showConfirmModal, setShowConfirmModal] = useState(false);
 
     function handleConfirmClick() {
         if (!userName.trim()) { alert("الرجاء تسجيل الدخول أولاً أو إنشاء حساب"); return; }
@@ -312,15 +313,19 @@ export default function CreateOrder() {
             {showConfirmModal && (
                 <div style={{
                     position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
-                    display: "flex", alignItems: "flex-end", justifyContent: "center",
+                    display: "flex", alignItems: "center", justifyContent: "center",
                     zIndex: 1000,
+                    padding: "max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left))",
+                    boxSizing: "border-box",
                 }}
                     onClick={() => setShowConfirmModal(false)}
                 >
                     <div style={{
-                        background: "white", borderRadius: "24px 24px 0 0",
-                        padding: "24px 20px 36px", width: "100%", maxWidth: "480px",
-                        maxHeight: "85vh", overflowY: "auto",
+                        background: "white", borderRadius: "20px",
+                        padding: "24px 20px 28px", width: "100%",
+                        maxWidth: "min(520px, calc(100vw - 32px))",
+                        maxHeight: "min(90vh, 720px)", overflowY: "auto",
+                        boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)",
                     }}
                         onClick={(e) => e.stopPropagation()}
                     >
@@ -424,15 +429,19 @@ export default function CreateOrder() {
             {showLocModal && (
                 <div style={{
                     position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
-                    display: "flex", alignItems: "flex-end", justifyContent: "center",
+                    display: "flex", alignItems: "center", justifyContent: "center",
                     zIndex: 1000,
+                    padding: "max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left))",
+                    boxSizing: "border-box",
                 }}
                     onClick={() => setShowLocModal(false)}
                 >
                     <div style={{
-                        background: "white", borderRadius: "24px 24px 0 0",
-                        padding: "24px 20px 40px", width: "100%", maxWidth: "480px",
-                        maxHeight: "85vh", overflowY: "auto",
+                        background: "white", borderRadius: "20px",
+                        padding: "24px 20px 32px", width: "100%",
+                        maxWidth: "min(520px, calc(100vw - 32px))",
+                        maxHeight: "min(90vh, 720px)", overflowY: "auto",
+                        boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)",
                     }}
                         onClick={(e) => e.stopPropagation()}
                     >
