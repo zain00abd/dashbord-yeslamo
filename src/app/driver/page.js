@@ -22,6 +22,12 @@ import "./driver.css";
 // ─── Config ───────────────────────────────────────────────────────────────
 // Driver's area. In a real app this comes from the driver's Firestore profile.
 const DRIVER_AREA_ID = "default";
+const CANCEL_REASONS = [
+    "الزبون لم يرد على المكالمة",
+    "لم يتم الاتفاق",
+    "العنوان غير واضح",
+    "لا أستطيع تنفيذ الطلب حاليا",
+];
 
 // ─── Order Details Modal ──────────────────────────────────────────────────
 function OrderModal({ order, onClose, onAccept, isAccepting }) {
@@ -40,59 +46,42 @@ function OrderModal({ order, onClose, onAccept, isAccepting }) {
                 </div>
 
                 <div className="detail-row">
-                    <div className="detail-label">العميل</div>
-                    <div className="detail-value">{order.customerName}</div>
-                </div>
-
-                <div className="detail-row">
-                    <div className="detail-label">رقم الهاتف</div>
-                    <div className="detail-value" dir="ltr" style={{ textAlign: "right", color: "var(--driver-primary)" }}>
-                        <a href={`tel:${order.customerPhone}`} style={{ color: "inherit", textDecoration: "none", display: "flex", alignItems: "center", gap: "6px", justifyContent: "flex-end" }}>
-                            {order.customerPhone}
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-                        </a>
+                    <div
+                        className="detail-value"
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            fontSize: "1rem",
+                        }}
+                    >
+                        <span style={{ color: "var(--driver-text-muted)", fontWeight: 800 }}>اسم العميل:</span>
+                        <span style={{ color: "var(--driver-text)", fontWeight: 900 }}>{order.customerName}</span>
                     </div>
                 </div>
 
                 <div className="detail-row">
-                    <div className="detail-label">عنوان التوصيل</div>
-                    <div className="detail-value" style={{ lineHeight: "1.6" }}>{order.customerAddress}</div>
-                </div>
-
-                {/* Location: GPS map link + description */}
-                {(order.locationCoords || order.locationDesc) && (
-                    <div style={{ background: "rgba(16, 185, 129, 0.05)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "16px", padding: "16px", marginTop: "8px", marginBottom: "8px" }}>
-                        <div style={{ color: "var(--driver-primary)", fontWeight: 800, fontSize: "0.9rem", marginBottom: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                            موقع التوصيل
+                    <div className="detail-label" style={{ marginBottom: "8px" }}>عنوان التوصيل</div>
+                    <div
+                        style={{
+                            background: "rgba(30, 58, 95, 0.05)",
+                            border: "1px solid rgba(30, 58, 95, 0.2)",
+                            borderRadius: "12px",
+                            padding: "10px 12px",
+                        }}
+                    >
+                        <div className="detail-value" style={{ lineHeight: "1.6", fontSize: "0.95rem" }}>
+                            {order.customerAddress}
                         </div>
-                        {order.locationCoords && (
-                            <a
-                                href={`https://www.google.com/maps?q=${order.locationCoords.lat},${order.locationCoords.lng}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{
-                                    display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", padding: "12px",
-                                    background: "var(--driver-primary-gradient)", color: "white", borderRadius: "12px",
-                                    textDecoration: "none", fontWeight: 800, fontSize: "1rem",
-                                    marginBottom: order.locationDesc ? "12px" : "0", boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)"
-                                }}
-                            >
-                                <svg viewBox="0 0 24 24" width="20" height="20" fill="white">
-                                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-                                </svg>
-                                فتح الموقع في الخرائط
-                            </a>
-                        )}
-                        {order.locationDesc && (
-                            <div style={{ fontSize: "0.95rem", color: "var(--driver-text)", lineHeight: "1.6", fontWeight: 700 }}>
+                        {order.locationDesc ? (
+                            <div style={{ marginTop: "4px", fontSize: "0.86rem", color: "var(--driver-text-muted)", fontWeight: 700 }}>
                                 {order.locationDesc}
                             </div>
-                        )}
+                        ) : null}
                     </div>
-                )}
+                </div>
 
-                <div className="detail-row" style={{ marginTop: "24px" }}>
+                <div className="detail-row" style={{ marginTop: "12px" }}>
                     <div className="detail-label" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <span>قائمة الطلبات</span>
                         <span style={{ background: "var(--driver-primary)", color: "white", padding: "3px 10px", borderRadius: "6px", fontSize: "0.8rem", fontWeight: 700 }}>
@@ -119,7 +108,7 @@ function OrderModal({ order, onClose, onAccept, isAccepting }) {
                     </div>
                 )}
 
-                <div style={{ marginTop: "32px" }}>
+                <div style={{ marginTop: "18px" }}>
                     <SwipeToAccept isLoading={isAccepting} onAccept={() => onAccept(order.id)} />
                 </div>
             </div>
@@ -206,6 +195,49 @@ export default function DriverDashboard() {
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [isAccepting, setIsAccepting] = useState(false);
     const [activeTab, setActiveTab] = useState("available"); // "available" | "mine"
+    const [callActionsReady, setCallActionsReady] = useState({});
+    const [callDetailsExpanded, setCallDetailsExpanded] = useState({});
+    const [cancelModalOrder, setCancelModalOrder] = useState(null);
+    const [cancelReason, setCancelReason] = useState(CANCEL_REASONS[0]);
+    const callFlowStorageKey = user ? `yaslamo_driver_call_flow_${user.uid}` : null;
+
+    useEffect(() => {
+        if (!callFlowStorageKey) return;
+        try {
+            const raw = localStorage.getItem(callFlowStorageKey);
+            if (!raw) return;
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === "object") {
+                setCallActionsReady(
+                    parsed.callActionsReady && typeof parsed.callActionsReady === "object"
+                        ? parsed.callActionsReady
+                        : {}
+                );
+                setCallDetailsExpanded(
+                    parsed.callDetailsExpanded && typeof parsed.callDetailsExpanded === "object"
+                        ? parsed.callDetailsExpanded
+                        : {}
+                );
+            }
+        } catch (err) {
+            console.error("read call flow storage error:", err);
+        }
+    }, [callFlowStorageKey]);
+
+    useEffect(() => {
+        if (!callFlowStorageKey) return;
+        try {
+            localStorage.setItem(
+                callFlowStorageKey,
+                JSON.stringify({
+                    callActionsReady,
+                    callDetailsExpanded,
+                })
+            );
+        } catch (err) {
+            console.error("save call flow storage error:", err);
+        }
+    }, [callFlowStorageKey, callActionsReady, callDetailsExpanded]);
 
     // Restore auth state on page load
     useEffect(() => {
@@ -334,6 +366,23 @@ export default function DriverDashboard() {
         }
     }, []);
 
+    const handleCancelOrder = useCallback(async () => {
+        if (!cancelModalOrder) return;
+        try {
+            await updateDoc(doc(db, "orders", cancelModalOrder.id), {
+                status: "cancelled",
+                cancelReason,
+                cancelledBy: "driver",
+                updatedAt: serverTimestamp(),
+            });
+            setCancelModalOrder(null);
+            setCancelReason(CANCEL_REASONS[0]);
+        } catch (err) {
+            console.error("cancel order error:", err);
+            alert("حدث خطأ أثناء إلغاء الطلب");
+        }
+    }, [cancelModalOrder, cancelReason]);
+
     // ── Render ────────────────────────────────────────────────────────────
     if (!authChecked) {
         return (
@@ -423,6 +472,7 @@ export default function DriverDashboard() {
                                             <span className="order-id">#{order.orderNumber}</span>
                                         </div>
                                         <div className="order-customer">
+                                            <div className="customer-name-label">اسم العميل</div>
                                             <div className="customer-name">{order.customerName}</div>
                                             <div className="customer-address">
                                                 <svg viewBox="0 0 24 24" width="20" height="20" fill="var(--driver-primary)" style={{ flexShrink: 0, marginTop: "2px" }}>
@@ -459,6 +509,16 @@ export default function DriverDashboard() {
                         ) : (
                             acceptedOrders.map((order) => (
                                 <div key={order.id} className="accepted-card">
+                                    {/** طلب مكالمة: نُظهر مسار مخصص مختصر */}
+                                    {(() => {
+                                        const isCallOrder =
+                                            Boolean(order.notes?.includes("تواصل")) ||
+                                            Boolean(order.items?.some((item) => String(item?.name || "").includes("مكالمة")));
+                                        const showCallActions = Boolean(callActionsReady[order.id]);
+                                        const isCallExpanded = Boolean(callDetailsExpanded[order.id]);
+
+                                        return (
+                                            <>
                                     {/* Card Header */}
                                     <div style={{
                                         background: "var(--driver-primary)",
@@ -487,64 +547,177 @@ export default function DriverDashboard() {
                                                     {order.customerPhone}
                                                 </a>
                                             </div>
+                                            <a
+                                                href={`tel:${order.customerPhone}`}
+                                                style={{
+                                                    marginInlineStart: "auto",
+                                                    width: "40px",
+                                                    height: "40px",
+                                                    borderRadius: "10px",
+                                                    background: "#16a34a",
+                                                    color: "white",
+                                                    textDecoration: "none",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    boxShadow: "0 6px 14px rgba(22, 163, 74, 0.28)",
+                                                    flexShrink: 0,
+                                                }}
+                                                aria-label="اتصال بالزبون"
+                                                title="اتصال بالزبون"
+                                            >
+                                                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+                                                    <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
+                                                </svg>
+                                            </a>
                                         </div>
 
                                         {/* Address & map */}
                                         <div style={{ background: "var(--driver-bg)", borderRadius: "8px", padding: "12px", marginBottom: "12px", border: "1px solid var(--driver-border)" }}>
-                                            <div style={{ fontSize: "0.78rem", color: "var(--driver-text-muted)", fontWeight: 700, marginBottom: "6px", display: "flex", alignItems: "center", gap: "4px" }}><svg viewBox="0 0 24 24" width="14" height="14" fill="var(--driver-text-muted)"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> عنوان التوصيل</div>
-                                            <div style={{ fontWeight: 600, color: "var(--driver-text)", fontSize: "0.9rem", marginBottom: order.locationCoords ? "10px" : 0, lineHeight: "1.5", textAlign: "right" }}>
-                                                {order.customerAddress}
+                                            <div style={{ display: "flex", gap: "10px", alignItems: "stretch" }}>
+                                                <div style={{ flex: 1, minWidth: 0 }}>
+                                                    <div style={{ fontSize: "0.78rem", color: "var(--driver-text-muted)", fontWeight: 700, marginBottom: "6px", display: "flex", alignItems: "center", gap: "4px" }}><svg viewBox="0 0 24 24" width="14" height="14" fill="var(--driver-text-muted)"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> عنوان التوصيل</div>
+                                                    <div style={{ fontWeight: 600, color: "var(--driver-text)", fontSize: "0.9rem", lineHeight: "1.5", textAlign: "right" }}>
+                                                        {order.customerAddress}
+                                                    </div>
+                                                    {order.locationDesc && (
+                                                        <div style={{ fontSize: "0.9rem", color: "var(--driver-text-muted)", marginTop: "6px", fontWeight: 600 }}>{order.locationDesc}</div>
+                                                    )}
+                                                </div>
+                                                {order.locationCoords && (
+                                                    <a
+                                                        href={`https://www.google.com/maps?q=${order.locationCoords.lat},${order.locationCoords.lng}`}
+                                                        target="_blank" rel="noopener noreferrer"
+                                                        style={{
+                                                            width: "120px",
+                                                            minWidth: "120px",
+                                                            display: "flex",
+                                                            flexDirection: "column",
+                                                            alignItems: "center",
+                                                            justifyContent: "center",
+                                                            gap: "6px",
+                                                            padding: "8px 10px",
+                                                            background: "var(--driver-primary)",
+                                                            color: "white",
+                                                            borderRadius: "8px",
+                                                            textDecoration: "none",
+                                                            fontWeight: 700,
+                                                            fontSize: "0.82rem",
+                                                            textAlign: "center",
+                                                        }}
+                                                    >
+                                                        <svg viewBox="0 0 24 24" width="18" height="18" fill="white">
+                                                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                                                        </svg>
+                                                        فتح في الخريطة
+                                                    </a>
+                                                )}
                                             </div>
-                                            {order.locationDesc && (
-                                                <div style={{ fontSize: "0.9rem", color: "var(--driver-text-muted)", marginBottom: order.locationCoords ? "12px" : 0, fontWeight: 600 }}>{order.locationDesc}</div>
-                                            )}
-                                            {order.locationCoords && (
+                                        </div>
+
+                                        {/* Call-flow helper: show only for call-based orders */}
+                                        {isCallOrder && !isCallExpanded && (
+                                            <div style={{ marginBottom: "12px" }}>
                                                 <a
-                                                    href={`https://www.google.com/maps?q=${order.locationCoords.lat},${order.locationCoords.lng}`}
-                                                    target="_blank" rel="noopener noreferrer"
+                                                    href={`tel:${order.customerPhone}`}
+                                                    onClick={() =>
+                                                        setCallActionsReady((prev) => ({ ...prev, [order.id]: true }))
+                                                    }
                                                     style={{
-                                                        display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", padding: "8px 12px",
-                                                        background: "var(--driver-primary)", color: "white", borderRadius: "8px",
-                                                        textDecoration: "none", fontWeight: 700, fontSize: "0.88rem"
+                                                        width: "100%",
+                                                        padding: "12px",
+                                                        borderRadius: "8px",
+                                                        border: "none",
+                                                        background: "var(--driver-primary-gradient)",
+                                                        color: "white",
+                                                        fontFamily: "inherit",
+                                                        fontWeight: 800,
+                                                        fontSize: "0.95rem",
+                                                        textDecoration: "none",
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "center",
+                                                        gap: "8px",
+                                                        boxShadow: "0 4px 14px rgba(16,185,129,0.28)",
                                                     }}
                                                 >
-                                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="white">
-                                                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+                                                        <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
                                                     </svg>
-                                                    فتح في الخرائط
+                                                    الاتصال بالزبون
                                                 </a>
-                                            )}
-                                        </div>
-
-                                        {/* Items */}
-                                        <div style={{ marginBottom: order.notes ? "12px" : 0 }}>
-                                            <div style={{ fontSize: "0.78rem", color: "var(--driver-text-muted)", fontWeight: 700, marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                                <span>الطلبات</span>
-                                                <span style={{ background: "var(--driver-bg)", color: "var(--driver-text-muted)", borderRadius: "6px", padding: "2px 8px", fontSize: "0.78rem" }}>{order.items?.length || 0} أصناف</span>
-                                            </div>
-                                            {order.items?.map((item, idx) => (
-                                                <div key={idx} style={{
-                                                    display: "flex", justifyContent: "space-between", alignItems: "center",
-                                                    padding: "8px 0", borderBottom: idx < (order.items.length - 1) ? "1px solid var(--driver-border)" : "none",
-                                                    fontSize: "0.9rem", color: "var(--driver-text)", direction: "rtl", textAlign: "right",
-                                                }}>
-                                                    <span style={{ fontWeight: 600 }}>{item.name}</span>
-                                                    <span style={{ background: "rgba(30, 58, 95, 0.08)", color: "var(--driver-primary)", borderRadius: "6px", padding: "2px 8px", fontWeight: 700, fontSize: "0.82rem", flexShrink: 0 }}>× {item.quantity}</span>
+                                                <div style={{ marginTop: "6px", fontSize: "0.78rem", color: "#dc2626", fontWeight: 800 }}>
+                                                    لا يجب التأخر في الاتصال
                                                 </div>
-                                            ))}
-                                        </div>
-
-                                        {/* Notes */}
-                                        {order.notes && (
-                                            <div style={{ background: "#fefce8", borderRadius: "8px", padding: "10px 12px", fontSize: "0.88rem", color: "#854d0e", fontWeight: 600, border: "1px solid #fde68a", display: "flex", gap: "6px", alignItems: "flex-start" }}>
-                                                <svg viewBox="0 0 24 24" width="14" height="14" fill="#854d0e" style={{ flexShrink: 0, marginTop: 2 }}><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-                                                {order.notes}
                                             </div>
+                                        )}
+
+                                        {/* Items + Notes */}
+                                        {(!isCallOrder || isCallExpanded) && (
+                                            <>
+                                                <div style={{ marginBottom: order.notes ? "12px" : 0 }}>
+                                                    <div style={{ fontSize: "0.78rem", color: "var(--driver-text-muted)", fontWeight: 700, marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                                        <span>الطلبات</span>
+                                                        <span style={{ background: "var(--driver-bg)", color: "var(--driver-text-muted)", borderRadius: "6px", padding: "2px 8px", fontSize: "0.78rem" }}>{order.items?.length || 0} أصناف</span>
+                                                    </div>
+                                                    {order.items?.map((item, idx) => (
+                                                        <div key={idx} style={{
+                                                            display: "flex", justifyContent: "space-between", alignItems: "center",
+                                                            padding: "8px 0", borderBottom: idx < (order.items.length - 1) ? "1px solid var(--driver-border)" : "none",
+                                                            fontSize: "0.9rem", color: "var(--driver-text)", direction: "rtl", textAlign: "right",
+                                                        }}>
+                                                            <span style={{ fontWeight: 600 }}>{item.name}</span>
+                                                            <span style={{ background: "rgba(30, 58, 95, 0.08)", color: "var(--driver-primary)", borderRadius: "6px", padding: "2px 8px", fontWeight: 700, fontSize: "0.82rem", flexShrink: 0 }}>× {item.quantity}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                {order.notes && !isCallOrder && (
+                                                    <div style={{ background: "#fefce8", borderRadius: "8px", padding: "10px 12px", fontSize: "0.88rem", color: "#854d0e", fontWeight: 600, border: "1px solid #fde68a", display: "flex", gap: "6px", alignItems: "flex-start" }}>
+                                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="#854d0e" style={{ flexShrink: 0, marginTop: 2 }}><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                                                        {order.notes}
+                                                    </div>
+                                                )}
+                                            </>
                                         )}
 
                                         {/* ── Status Actions ── */}
                                         <div style={{ marginTop: "16px" }}>
-                                            {order.status === "accepted" && (
+                                            {isCallOrder ? (
+                                                showCallActions ? (
+                                                    isCallExpanded ? (
+                                                        order.status === "accepted" ? (
+                                                            <button
+                                                                onClick={() => handleUpdateStatus(order.id, "on_the_way")}
+                                                                style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "none", background: "#2563eb", color: "white", fontFamily: "inherit", fontWeight: 700, fontSize: "0.95rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+                                                            >
+                                                                <svg viewBox="0 0 24 24" width="18" height="18" fill="white"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
+                                                                أنا في الطريق
+                                                            </button>
+                                                        ) : null
+                                                    ) : (
+                                                        <div style={{ display: "flex", gap: "8px" }}>
+                                                            <button
+                                                                onClick={() =>
+                                                                    setCallDetailsExpanded((prev) => ({ ...prev, [order.id]: true }))
+                                                                }
+                                                                style={{ flex: 1, padding: "12px", borderRadius: "8px", border: "none", background: "#2563eb", color: "white", fontFamily: "inherit", fontWeight: 700, fontSize: "0.95rem", cursor: "pointer" }}
+                                                            >
+                                                                قبول الطلب
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    setCancelModalOrder(order);
+                                                                    setCancelReason(CANCEL_REASONS[0]);
+                                                                }}
+                                                                style={{ flex: 1, padding: "12px", borderRadius: "8px", border: "1px solid rgba(220, 38, 38, 0.28)", background: "rgba(220, 38, 38, 0.10)", color: "#b91c1c", fontFamily: "inherit", fontWeight: 700, fontSize: "0.95rem", cursor: "pointer" }}
+                                                            >
+                                                                إلغاء الطلب
+                                                            </button>
+                                                        </div>
+                                                    )
+                                                ) : null
+                                            ) : order.status === "accepted" && (
                                                 <button
                                                     onClick={() => handleUpdateStatus(order.id, "on_the_way")}
                                                     style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "none", background: "#2563eb", color: "white", fontFamily: "inherit", fontWeight: 700, fontSize: "0.95rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
@@ -578,6 +751,9 @@ export default function DriverDashboard() {
                                             </div>
                                         )}
                                     </div>
+                                            </>
+                                        );
+                                    })()}
                                 </div>
                             ))
                         )}
@@ -591,6 +767,64 @@ export default function DriverDashboard() {
                 onAccept={handleAcceptOrder}
                 isAccepting={isAccepting}
             />
+
+            {cancelModalOrder && (
+                <div className="modal-overlay" onClick={() => setCancelModalOrder(null)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "420px" }}>
+                        <div className="modal-header">
+                            <div className="modal-title">لماذا الإلغاء؟</div>
+                            <button className="close-btn" onClick={() => setCancelModalOrder(null)}>
+                                <svg viewBox="0 0 24 24" width="22" height="22" fill="#64748b">
+                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div style={{ display: "grid", gap: "8px", marginTop: "8px" }}>
+                            {CANCEL_REASONS.map((reason) => (
+                                <label
+                                    key={reason}
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "10px",
+                                        padding: "10px 12px",
+                                        borderRadius: "10px",
+                                        border: "1px solid var(--driver-border)",
+                                        background: cancelReason === reason ? "rgba(30, 58, 95, 0.06)" : "white",
+                                        cursor: "pointer",
+                                        fontWeight: 600,
+                                        color: "var(--driver-text)",
+                                    }}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="cancel-reason"
+                                        checked={cancelReason === reason}
+                                        onChange={() => setCancelReason(reason)}
+                                    />
+                                    <span>{reason}</span>
+                                </label>
+                            ))}
+                        </div>
+
+                        <div style={{ display: "flex", gap: "8px", marginTop: "16px" }}>
+                            <button
+                                onClick={() => setCancelModalOrder(null)}
+                                style={{ flex: 1, padding: "11px", borderRadius: "8px", border: "1px solid var(--driver-border)", background: "white", color: "var(--driver-text)", fontFamily: "inherit", fontWeight: 700, cursor: "pointer" }}
+                            >
+                                رجوع
+                            </button>
+                            <button
+                                onClick={handleCancelOrder}
+                                style={{ flex: 1, padding: "11px", borderRadius: "8px", border: "none", background: "#dc2626", color: "white", fontFamily: "inherit", fontWeight: 700, cursor: "pointer" }}
+                            >
+                                تأكيد الإلغاء
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

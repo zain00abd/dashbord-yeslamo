@@ -187,30 +187,32 @@ body.driver-app {
 .order-card {
     background: var(--driver-card);
     border-radius: 12px;
-    padding: 16px;
+    padding: 14px;
     box-shadow: var(--driver-shadow);
     border: 1px solid var(--driver-border);
-    transition: box-shadow 0.2s ease;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
 }
 
 .order-card:hover {
+    border-color: rgba(255, 107, 53, 0.28);
     box-shadow: var(--driver-shadow-hover);
+    transform: translateY(-1px);
 }
 
 .order-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
-    padding-bottom: 12px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
     border-bottom: 1px solid var(--driver-border);
 }
 
 .order-id {
     font-family: 'Outfit', sans-serif;
-    font-size: 0.9rem;
+    font-size: 0.86rem;
     background: var(--driver-bg);
-    padding: 4px 12px;
+    padding: 4px 10px;
     border-radius: 6px;
     color: var(--driver-text);
     font-weight: 700;
@@ -226,13 +228,21 @@ body.driver-app {
 }
 
 .order-customer {
-    margin-bottom: 14px;
+    margin-bottom: 12px;
+}
+
+.customer-name-label {
+    font-size: 0.72rem;
+    color: var(--driver-text-muted);
+    font-weight: 800;
+    margin-bottom: 3px;
+    letter-spacing: 0.02em;
 }
 
 .customer-name {
     font-weight: 800;
-    font-size: 1.1rem;
-    margin-bottom: 6px;
+    font-size: 1rem;
+    margin-bottom: 8px;
     color: var(--driver-text);
 }
 
@@ -241,11 +251,11 @@ body.driver-app {
     align-items: flex-start;
     gap: 8px;
     color: var(--driver-text-muted);
-    font-size: 0.88rem;
-    line-height: 1.6;
+    font-size: 0.86rem;
+    line-height: 1.55;
     font-weight: 600;
     background: var(--driver-bg);
-    padding: 10px 12px;
+    padding: 9px 11px;
     border-radius: 8px;
 }
 
@@ -269,11 +279,11 @@ body.driver-app {
     background: var(--driver-primary);
     border: none;
     color: white;
-    padding: 12px;
+    padding: 11px;
     border-radius: 8px;
     font-family: inherit;
     font-weight: 700;
-    font-size: 0.92rem;
+    font-size: 0.9rem;
     cursor: pointer;
     transition: background 0.2s;
     display: flex;
@@ -366,27 +376,29 @@ body.driver-app {
     background: rgba(15, 23, 42, 0.5);
     z-index: 1000;
     display: flex;
-    align-items: flex-end;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
 }
 
 .modal-content {
     background: white;
     width: 100%;
     max-width: 600px;
-    margin: 0 auto;
-    border-radius: 16px 16px 0 0;
-    padding: 24px 20px 36px;
-    max-height: 90vh;
+    margin: 0;
+    border-radius: 16px;
+    padding: 18px 16px 20px;
+    max-height: min(90vh, 720px);
     overflow-y: auto;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+    box-shadow: 0 14px 36px rgba(0,0,0,0.18);
 }
 
 .modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 14px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
     border-bottom: 1px solid var(--driver-border);
 }
 
@@ -414,18 +426,18 @@ body.driver-app {
 }
 
 .detail-row {
-    margin-bottom: 16px;
+    margin-bottom: 10px;
 }
 
 .detail-label {
     font-size: 0.85rem;
     color: var(--driver-text-muted);
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     font-weight: 700;
 }
 
 .detail-value {
-    font-size: 1.05rem;
+    font-size: 0.97rem;
     font-weight: 700;
     color: var(--driver-text);
 }
@@ -433,8 +445,8 @@ body.driver-app {
 .items-list {
     background: var(--driver-bg);
     border-radius: 10px;
-    padding: 12px 16px;
-    margin-top: 8px;
+    padding: 10px 12px;
+    margin-top: 6px;
     border: 1px solid var(--driver-border);
     direction: rtl;
     text-align: right;
@@ -443,9 +455,9 @@ body.driver-app {
 .item-row {
     display: flex;
     justify-content: space-between;
-    padding: 10px 0;
+    padding: 8px 0;
     border-bottom: 1px solid var(--driver-border);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     direction: rtl;
     text-align: right;
 }

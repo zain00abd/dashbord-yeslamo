@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { doc, onSnapshot, collection, query, where, limit, getDocs, updateDoc } from "firebase/firestore";
 
@@ -16,6 +17,9 @@ export default function CreateOrder() {
     const [hasAccount, setHasAccount] = useState(false);
     const [userUid, setUserUid] = useState("");
     const [customerStatus, setCustomerStatus] = useState(null);
+
+    const searchParams = useSearchParams();
+    const isCallMode = searchParams?.get("mode") === "call";
 
     // Account location
     const [acctCoords, setAcctCoords] = useState(null);
@@ -64,11 +68,16 @@ export default function CreateOrder() {
     useEffect(() => () => { if (unsubscribeRef.current) unsubscribeRef.current(); }, []);
 
     useEffect(() => {
+        if (isCallMode) {
+            setItemsCount(1);
+            return;
+        }
         const lines = orders.split("\n").filter((line) => line.trim() !== "");
         setItemsCount(lines.length);
-    }, [orders]);
+    }, [orders, isCallMode]);
 
     function getItemsCountText() {
+        if (isCallMode) return "طلب تواصل";
         if (itemsCount === 0) return "لا توجد أصناف";
         if (itemsCount === 1) return "صنف واحد";
         if (itemsCount === 2) return "صنفان";
@@ -93,6 +102,13 @@ export default function CreateOrder() {
             }
             return { name: itemName || "صنف غير مسمى", quantity };
         });
+    }
+
+    function getOrderSummaryItems() {
+        if (isCallMode) {
+            return [{ name: "سيحدد المندوب الأصناف معك هاتفيا", quantity: 1 }];
+        }
+        return parseOrders(orders);
     }
 
     function getModalLocation() {
@@ -151,15 +167,19 @@ export default function CreateOrder() {
 
     function handleConfirmClick() {
         if (!userName.trim()) { alert("الرجاء تسجيل الدخول أولاً أو إنشاء حساب"); return; }
-        if (!orders.trim()) { alert("الرجاء إدخال الطلبات المطلوبة"); return; }
-        const items = parseOrders(orders);
-        if (items.length === 0) { alert("الرجاء إدخال صنف واحد على الأقل"); return; }
+        if (!isCallMode) {
+            if (!orders.trim()) { alert("الرجاء إدخال الطلبات المطلوبة"); return; }
+            const items = parseOrders(orders);
+            if (items.length === 0) { alert("الرجاء إدخال صنف واحد على الأقل"); return; }
+        }
         setSubmitError("");
         setShowConfirmModal(true);
     }
 
     async function submitOrder() {
-        const items = parseOrders(orders);
+        const items = isCallMode
+            ? [{ name: "طلب عبر المكالمة", quantity: 1 }]
+            : parseOrders(orders);
         setIsSubmitting(true);
         setSubmitError("");
 
@@ -177,7 +197,7 @@ export default function CreateOrder() {
                     customerAddress: activeCity ? `${activeCity}، ${activeDesc}` : address.trim(),
                     customerUid: userUid || null,
                     items,
-                    notes: "",
+                    notes: isCallMode ? "طلب تواصل مع المندوب هاتفيا" : "",
                     locationCoords: activeCoords || null,
                     locationDesc: activeDesc,
                     customerStatus: customerStatus || null,
@@ -241,21 +261,38 @@ export default function CreateOrder() {
     return (
         <>
             <div className="page-wrapper">
-                {/* Top Bar */}
-                <div className="top-bar">
-                    <Link href="/" className="top-bar-logo">
-                        <Image src="/logo1.jpg" alt="يسلمو" width={36} height={36} />
-                        <span>يسلمو</span>
-                    </Link>
-                    <Link href="/home" className="top-bar-back">
-                        ← الرئيسية
-                    </Link>
-                </div>
-
                 {/* Form Content */}
-                <div className="content-area" style={{ paddingTop: "20px", paddingBottom: "30px" }}>
+                <div className="content-area" style={{ paddingTop: "14px", paddingBottom: "14px" }}>
 
                     {/* Orders — refreshed design */}
+                <div className="order-mode-toggle-wrap order-mode-toggle-wrap--above">
+                    <div className="order-mode-toggle" role="tablist" aria-label="طريقة إنشاء الطلب">
+                        <Link
+                            href="/create-order"
+                            className={`order-mode-btn${!isCallMode ? " order-mode-btn--active" : ""}`}
+                            role="tab"
+                            aria-selected={!isCallMode}
+                        >
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M12 20h9" />
+                                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5z" />
+                            </svg>
+                            كتابة
+                        </Link>
+                        <Link
+                            href="/create-order?mode=call"
+                            className={`order-mode-btn${isCallMode ? " order-mode-btn--active" : ""}`}
+                            role="tab"
+                            aria-selected={isCallMode}
+                        >
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.08 4.18 2 2 0 0 1 4.06 2h3a2 2 0 0 1 2 1.72 12.8 12.8 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.8 12.8 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                            </svg>
+                            اتصال بالمندوب
+                        </Link>
+                    </div>
+                </div>
+
                     <div className="order-section-card">
                         <div className="order-section-header">
                             <div className="order-section-icon">
@@ -263,27 +300,39 @@ export default function CreateOrder() {
                             </div>
                             <div>
                                 <div className="order-section-title">الطلبات المرادة</div>
-                                <div className="order-section-subtitle">اكتب كل صنف في سطر منفصل</div>
+                                <div className="order-section-subtitle">
+                                    {isCallMode ? "سيحدد المندوب الأصناف معك هاتفيا" : "اكتب طلباتك هنا"}
+                                </div>
                             </div>
-                            <span className="order-count-badge">{getItemsCountText()}</span>
                         </div>
 
-                        <div className="order-write-label">
-                            <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" /></svg>
-                            اكتب طلباتك هنا
-                        </div>
+                        {isCallMode ? (
+                            <div className="order-hint" style={{ marginTop: 12 }}>
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+                                    <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.07 21 3 13.93 3 5c0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.24.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
+                                </svg>
+                                سيقوم المندوب بالتواصل معك هاتفيا لتحديد طلبك
+                            </div>
+                        ) : (
+                            <>
+                                <div className="order-write-label">
+                                    <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" /></svg>
+                                    اكتب طلباتك هنا
+                                </div>
 
-                        <textarea
-                            className="order-textarea"
-                            placeholder={`بيتزا عائلية - 2\nمشروب غازي - 3\nبطاطس مقلية كبيرة - 1\n\nاكتب كل صنف في سطر...`}
-                            value={orders}
-                            onChange={(e) => setOrders(e.target.value)}
-                        />
+                                <textarea
+                                    className="order-textarea"
+                                    placeholder={`بيتزا عائلية - 2\nمشروب غازي - 3\nبطاطس مقلية كبيرة - 1\n\nاكتب كل صنف في سطر...`}
+                                    value={orders}
+                                    onChange={(e) => setOrders(e.target.value)}
+                                />
 
-                        <div className="order-hint">
-                            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" /></svg>
-                            استخدم شرطة (-) للفصل بين الاسم والكمية
-                        </div>
+                                <div className="order-hint">
+                                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" /></svg>
+                                    استخدم شرطة (-) للفصل بين الاسم والكمية
+                                </div>
+                            </>
+                        )}
                     </div>
 
                     {submitError && (
@@ -304,7 +353,7 @@ export default function CreateOrder() {
                         <svg viewBox="0 0 24 24" fill="white">
                             <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
                         </svg>
-                        تأكيد الطلب
+                        {isCallMode ? "إرسال طلب تواصل" : "تأكيد الطلب"}
                     </button>
                 </div>
             </div>
@@ -378,10 +427,10 @@ export default function CreateOrder() {
                             <div style={{ fontSize: "0.78rem", color: "#888", fontWeight: 700, marginBottom: "8px" }}>
                                 ملخص الطلب
                             </div>
-                            {parseOrders(orders).map((item, i) => (
+                            {getOrderSummaryItems().map((item, i) => (
                                 <div key={i} style={{
                                     display: "flex", justifyContent: "space-between", alignItems: "center",
-                                    padding: "6px 0", borderBottom: i < parseOrders(orders).length - 1 ? "1px solid #f0f0f0" : "none",
+                                    padding: "6px 0", borderBottom: i < getOrderSummaryItems().length - 1 ? "1px solid #f0f0f0" : "none",
                                     fontSize: "0.88rem", color: "#334155",
                                 }}>
                                     <span style={{ background: "#fff0eb", color: "#ff6b35", borderRadius: "6px", padding: "2px 8px", fontSize: "0.78rem", fontWeight: 700 }}>
@@ -561,7 +610,11 @@ export default function CreateOrder() {
                             boxShadow: "0 8px 24px rgba(255,107,53,0.4)",
                         }}>
                             <svg viewBox="0 0 24 24" width="36" height="36" fill="white">
-                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                                {isCallMode ? (
+                                    <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
+                                ) : (
+                                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                                )}
                             </svg>
                         </div>
                     </div>
@@ -570,7 +623,9 @@ export default function CreateOrder() {
                         جاري البحث عن مندوب...
                     </h2>
                     <p style={{ color: "#64748b", fontSize: "0.95rem", marginBottom: "32px" }}>
-                        طلبك في الانتظار، سيتم إشعارك فور قبول مندوب لطلبك
+                        {isCallMode
+                            ? "طلب تواصل في الانتظار، سيتم الاتصال بك هاتفيا بمجرد قبول المندوب"
+                            : "طلبك في الانتظار، سيتم إشعارك فور قبول مندوب لطلبك"}
                     </p>
 
                     <div style={{
@@ -631,33 +686,22 @@ export default function CreateOrder() {
                         .accepted-icon { animation: pop-in 0.5s ease-out forwards; }
                     `}</style>
 
-                    <div className="accepted-icon" style={{
-                        width: 80, height: 80, borderRadius: "50%",
-                        background: "linear-gradient(135deg,#10b981,#059669)",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        boxShadow: "0 8px 28px rgba(16,185,129,0.4)", marginBottom: "20px",
-                    }}>
-                        <svg viewBox="0 0 24 24" width="42" height="42" fill="white">
-                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
-                        </svg>
-                    </div>
-
-                    <h2 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#065f46", marginBottom: "4px" }}>
-                        تم قبول طلبك! 🎉
+                    <h2 style={{ fontSize: "1.35rem", fontWeight: 800, color: "#065f46", marginBottom: "14px" }}>
+                        تم قبول طلبك
                     </h2>
-                    <p style={{ color: "#6b7280", fontSize: "0.92rem", marginBottom: "28px" }}>
-                        مندوب في طريقه إليك الآن
-                    </p>
 
                     {/* Driver card */}
                     <div style={{
-                        background: "white", borderRadius: "20px", padding: "24px",
-                        boxShadow: "0 4px 24px rgba(0,0,0,0.1)", width: "100%", maxWidth: "380px",
-                        textAlign: "right", marginBottom: "16px",
+                        background: "white", borderRadius: "20px", padding: "20px 18px",
+                        boxShadow: "0 6px 26px rgba(0,0,0,0.08)", width: "100%", maxWidth: "420px",
+                        textAlign: "right", marginBottom: "18px",
                     }}>
-                        <div style={{ fontSize: "0.72rem", color: "#10b981", fontWeight: 700, marginBottom: "14px", letterSpacing: "0.05em" }}>
-                            معلومات المندوب
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "10px", marginBottom: "14px" }}>
+                            <div style={{ fontSize: "0.72rem", color: "#10b981", fontWeight: 800, letterSpacing: "0.04em" }}>
+                                معلومات المندوب
+                            </div>
                         </div>
+
                         <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
                             <div style={{
                                 width: 52, height: 52, borderRadius: "50%",
@@ -669,46 +713,39 @@ export default function CreateOrder() {
                                 </svg>
                             </div>
                             <div>
-                                <div style={{ fontWeight: 800, fontSize: "1.1rem", color: "#1a1a2e" }}>{driverInfo.name}</div>
+                                <div style={{ fontWeight: 900, fontSize: "1.12rem", color: "#1a1a2e" }}>{driverInfo.name}</div>
                                 {driverInfo.phone && (
-                                    <div style={{ color: "#64748b", fontSize: "0.87rem", marginTop: "2px" }} dir="ltr">{driverInfo.phone}</div>
+                                    <div style={{ color: "#64748b", fontSize: "0.88rem", marginTop: "2px" }} dir="ltr">{driverInfo.phone}</div>
                                 )}
                             </div>
                         </div>
-                        {driverInfo.phone && (
-                            <a href={`tel:${driverInfo.phone}`} style={{
-                                display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
-                                marginTop: "16px", padding: "13px", borderRadius: "12px",
-                                background: "linear-gradient(135deg,#10b981,#059669)", color: "white",
-                                textDecoration: "none", fontWeight: 700, fontSize: "0.95rem",
-                            }}>
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="white">
-                                    <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
-                                </svg>
-                                اتصل بالمندوب
-                            </a>
-                        )}
                     </div>
 
                     {/* Order summary */}
                     <div style={{
                         background: "white", borderRadius: "16px", padding: "20px 24px",
-                        boxShadow: "0 4px 20px rgba(0,0,0,0.06)", width: "100%", maxWidth: "380px",
-                        textAlign: "right", marginBottom: "20px",
+                        boxShadow: "0 4px 20px rgba(0,0,0,0.06)", width: "100%", maxWidth: "420px",
+                        textAlign: "right", marginBottom: "22px",
                     }}>
-                        <div style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: 700, marginBottom: "10px" }}>
-                            تفاصيل طلبك — #{orderNumber}
+                        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "12px", marginBottom: "12px" }}>
+                            <div style={{ fontSize: "0.82rem", color: "#475569", fontWeight: 900 }}>
+                                ملخص الطلب
+                            </div>
+                            <div style={{ background: "#fff0eb", color: "#ff6b35", borderRadius: "999px", padding: "6px 12px", fontWeight: 900, fontSize: "0.85rem" }}>
+                                #{orderNumber}
+                            </div>
                         </div>
                         {orderItems.map((item, i) => (
                             <div key={i} style={{
-                                display: "flex", justifyContent: "space-between",
-                                padding: "8px 0", borderBottom: i < orderItems.length - 1 ? "1px solid #f1f5f9" : "none",
+                                display: "flex", justifyContent: "space-between", alignItems: "center",
+                                padding: "8px 0",
+                                borderBottom: i < orderItems.length - 1 ? "1px solid #f1f5f9" : "none",
                                 fontSize: "0.92rem", color: "#334155",
                             }}>
-                                <span style={{ background: "#f0fdf4", color: "#059669", borderRadius: "6px", padding: "2px 8px", fontSize: "0.8rem", fontWeight: 700 }}>
+                                <span style={{ color: "#475569", fontWeight: 800 }}>{item.name}</span>
+                                <span style={{ background: "#f0fdf4", color: "#059669", borderRadius: "999px", padding: "3px 10px", fontSize: "0.8rem", fontWeight: 900 }}>
                                     × {item.quantity}
                                 </span>
-                                <span>{item.name}</span>
                             </div>
                         ))}
                     </div>
@@ -716,12 +753,39 @@ export default function CreateOrder() {
                     <Link href="/track-order">
                         <button
                             style={{
-                                padding: "14px 32px", borderRadius: "14px", border: "none",
-                                background: "linear-gradient(135deg,#10b981,#059669)", color: "white", fontFamily: "inherit",
-                                fontWeight: 800, fontSize: "1rem", cursor: "pointer", boxShadow: "0 6px 20px rgba(16,185,129,0.3)"
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: "10px",
+                                padding: "16px 22px",
+                                borderRadius: "14px",
+                                border: "none",
+                                background: "linear-gradient(135deg,#10b981,#059669)",
+                                color: "white",
+                                fontFamily: "inherit",
+                                fontWeight: 900,
+                                fontSize: "1rem",
+                                cursor: "pointer",
+                                boxShadow: "0 6px 20px rgba(16,185,129,0.3)",
+                                width: "100%",
+                                maxWidth: "420px",
                             }}
                         >
-                            📍 تتبع الطلب
+                            <svg
+                                viewBox="0 0 24 24"
+                                width="18"
+                                height="18"
+                                fill="none"
+                                stroke="white"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                            >
+                                <path d="M12 21s-6.5-4.2-6.5-10a6.5 6.5 0 0 1 13 0c0 5.8-6.5 10-6.5 10z" />
+                                <path d="M12 11.2a2.2 2.2 0 1 0 0-4.4 2.2 2.2 0 0 0 0 4.4z" />
+                            </svg>
+                            تتبع الطلب
                         </button>
                     </Link>
                 </div>

@@ -379,71 +379,52 @@ export default function HomePage() {
 
             <main className="home-v2-main">
                 <div className="home-v2-shell">
+                    <HomeCategoryMarquee />
+
                     <section className="home-v2-hero" aria-labelledby="home-v2-title">
                         <div className="home-v2-hero-inner">
                             <p className="home-v2-eyebrow">توصيل من البقالة</p>
                             <h1 id="home-v2-title" className="home-v2-title">
                                 طلبك يبدأ من هنا
                             </h1>
-                            <Link href="/create-order" className="home-v2-cta">
-                                <span className="home-v2-cta-inner">
-                                    <IconStroke className="home-v2-cta-icon">
-                                        <path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                                <Link href="/create-order" className="home-v2-cta">
+                                    <span className="home-v2-cta-inner">
+                                        <IconStroke className="home-v2-cta-icon">
+                                            <path d="M7 7h10l1 14H6L7 7Z" />
+                                            <path d="M9 7V5a3 3 0 0 1 6 0v2" />
+                                        </IconStroke>
+                                        ابدأ الطلب
+                                    </span>
+                                    <IconStroke className="home-v2-cta-chevron">
+                                        <path d="M15 18l-6-6 6-6" />
                                     </IconStroke>
-                                    ابدأ الطلب
-                                </span>
-                                <IconStroke className="home-v2-cta-chevron">
-                                    <path d="M15 18l-6-6 6-6" />
-                                </IconStroke>
-                            </Link>
+                                </Link>
+
+                                <div className="home-v2-cta-or" aria-hidden="true">
+                                    أو
+                                </div>
+
+                                <div className="home-v2-call-note">
+                                    اطلب أغراضك عبر مكالمة صوتية مع المندوب
+                                </div>
+
+                                <Link href="/create-order?mode=call" className="home-v2-cta home-v2-cta--secondary">
+                                    <span className="home-v2-cta-inner">
+                                        <IconStroke className="home-v2-cta-icon">
+                                            <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
+                                        </IconStroke>
+                                        اتصل بالمندوب
+                                    </span>
+                                    <IconStroke className="home-v2-cta-chevron">
+                                        <path d="M15 18l-6-6 6-6" />
+                                    </IconStroke>
+                                </Link>
+                            </div>
                         </div>
                     </section>
 
-                    <HomeCategoryMarquee />
 
-                    {lastOrder ? (
-                        <Link
-                            href="/track-order"
-                            className={`home-v2-last${lastOrder.status === "delivered" ? " home-v2-last--delivered" : ""}`}
-                        >
-                            <div className="home-v2-last-media">
-                                {lastOrder.status === "delivered" ? (
-                                    <IconStroke className="home-v2-last-ico">
-                                        <path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </IconStroke>
-                                ) : (
-                                    <IconStroke className="home-v2-last-ico">
-                                        <path d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
-                                    </IconStroke>
-                                )}
-                            </div>
-                            <div className="home-v2-last-body">
-                                <div className="home-v2-last-top">
-                                    <span className="home-v2-last-label">آخر طلب</span>
-                                    <span className="home-v2-last-num">#{lastOrder.orderNumber}</span>
-                                </div>
-                                <div className="home-v2-last-meta">
-                                    <span className="home-v2-last-pill">{STATUS_LABEL[lastOrder.status] || lastOrder.status}</span>
-                                    <span className="home-v2-last-when">{formatRecentWhen(lastOrder.createdAt)}</span>
-                                </div>
-                                {lastOrder.itemsPreview ? (
-                                    <p className="home-v2-last-preview">{lastOrder.itemsPreview}</p>
-                                ) : lastOrder.itemsCount > 0 ? (
-                                    <p className="home-v2-last-preview">{lastOrder.itemsCount} أصناف</p>
-                                ) : null}
-                            </div>
-                            <IconStroke className="home-v2-last-arrow">
-                                <path d="M15.75 19.5L8.25 12l7.5-7.5" />
-                            </IconStroke>
-                        </Link>
-                    ) : null}
-
-                    <p className="home-v2-foot">
-                        <IconStroke className="home-v2-foot-icon">
-                            <path d="M12 16v-4m0-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </IconStroke>
-                        يمكنك متابعة الطلبات من «طلباتي» في الشريط السفلي.
-                    </p>
                 </div>
             </main>
         </div>

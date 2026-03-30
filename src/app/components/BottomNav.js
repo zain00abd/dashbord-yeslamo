@@ -8,11 +8,17 @@ export default function BottomNav() {
     const pathname = usePathname();
     const [user, setUser] = useState(null);
 
-    useEffect(() => {
+    function readStoredUser() {
         try {
             const stored = localStorage.getItem("yaslamo_user");
-            if (stored) setUser(JSON.parse(stored));
-        } catch (e) {}
+            setUser(stored ? JSON.parse(stored) : null);
+        } catch (e) {
+            setUser(null);
+        }
+    }
+
+    useEffect(() => {
+        readStoredUser();
 
         const onStorage = () => {
             try {
@@ -27,6 +33,13 @@ export default function BottomNav() {
             window.removeEventListener("yaslamo_auth", onStorage);
         };
     }, []);
+
+    // المهم: "storage" لا ينشغّل داخل نفس التبويب غالباً.
+    // عند تسجيل الدخول عادةً يتم تغيير الـ pathname، فنُعيد قراءة localStorage لتحديث الـ navbar فوراً.
+    useEffect(() => {
+        readStoredUser();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pathname]);
 
     const hiddenRoutes = ["/driver", "/login", "/register", "/terms", "/privacy"];
     if (!user || hiddenRoutes.some((r) => pathname.startsWith(r))) return null;
