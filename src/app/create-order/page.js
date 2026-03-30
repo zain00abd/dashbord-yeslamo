@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { doc, onSnapshot, collection, query, where, limit, getDocs, updateDoc } from "firebase/firestore";
 
-export default function CreateOrder() {
+function CreateOrderContent() {
     const [userName, setUserName] = useState("");
     const [userPhone, setUserPhone] = useState("");
     const [address, setAddress] = useState("");
@@ -791,5 +791,31 @@ export default function CreateOrder() {
                 </div>
             )}
         </>
+    );
+}
+
+export default function CreateOrder() {
+    return (
+        <Suspense
+            fallback={
+                <div
+                    className="page-wrapper"
+                    style={{
+                        minHeight: "50vh",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: 24,
+                        fontFamily: "inherit",
+                        color: "var(--text-muted, #64748b)",
+                        fontWeight: 700,
+                    }}
+                >
+                    جاري التحميل...
+                </div>
+            }
+        >
+            <CreateOrderContent />
+        </Suspense>
     );
 }
