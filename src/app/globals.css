@@ -1230,7 +1230,7 @@ body:has(.bottom-nav) > div:not(.bottom-nav) {
 }
 
 .order-mode-btn--active {
-  background: linear-gradient(135deg, #0f172a, #1f2937);
+  background: linear-gradient(135deg, #ff7300, #d55900);
   border-color: rgba(255, 255, 255, 0.25);
   color: #ffffff;
   box-shadow: 0 12px 26px rgba(2, 6, 23, 0.28);

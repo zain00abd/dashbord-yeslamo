@@ -106,6 +106,28 @@ body.driver-app {
     background: rgba(255, 255, 255, 0.2);
 }
 
+.driver-settings-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.driver-settings-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.driver-status-badge--offline::before {
+    background: #ef4444;
+}
+
 /* Tab Switcher */
 .driver-tabs-container {
     padding: 12px 20px 8px;
@@ -427,6 +449,125 @@ body.driver-app {
 
 .detail-row {
     margin-bottom: 10px;
+}
+
+.driver-settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.driver-profile-card {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid var(--driver-border);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 14px;
+}
+
+.driver-profile-title {
+    font-size: 0.9rem;
+    font-weight: 900;
+    color: var(--driver-primary);
+    margin-bottom: 10px;
+}
+
+.driver-profile-list {
+    display: grid;
+    gap: 8px;
+}
+
+.driver-profile-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border: 1px solid var(--driver-border);
+    border-radius: 10px;
+    background: #ffffff;
+    padding: 9px 10px;
+}
+
+.driver-profile-label {
+    font-size: 0.82rem;
+    color: var(--driver-text-muted);
+    font-weight: 800;
+}
+
+.driver-profile-value {
+    font-size: 0.92rem;
+    color: var(--driver-text);
+    font-weight: 800;
+    text-align: left;
+    max-width: 65%;
+    overflow-wrap: anywhere;
+}
+
+.driver-settings-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.driver-settings-field span {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--driver-text-muted);
+}
+
+.driver-settings-field input {
+    width: 100%;
+    border: 1px solid var(--driver-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 0.92rem;
+    color: var(--driver-text);
+    background: #fff;
+}
+
+.driver-settings-field input:focus {
+    outline: 2px solid rgba(37, 99, 235, 0.28);
+    border-color: rgba(37, 99, 235, 0.5);
+}
+
+.driver-settings-value {
+    width: 100%;
+    min-height: 42px;
+    border: 1px solid var(--driver-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--driver-text);
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+}
+
+.driver-settings-toggles {
+    margin-top: 10px;
+    display: grid;
+    gap: 8px;
+}
+
+.driver-toggle-item {
+    border: 1px solid var(--driver-border);
+    border-radius: 10px;
+    background: #f8fafc;
+    padding: 9px 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    color: var(--driver-text);
+}
+
+.driver-toggle-item input {
+    width: 16px;
+    height: 16px;
 }
 
 .detail-label {

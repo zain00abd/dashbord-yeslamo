@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import {
     collection,
     query,
@@ -28,6 +29,15 @@ const CANCEL_REASONS = [
     "العنوان غير واضح",
     "لا أستطيع تنفيذ الطلب حاليا",
 ];
+const DRIVER_SETTINGS_DEFAULT = {
+    name: "",
+    phone: "",
+    vehicleType: "",
+    area: DRIVER_AREA_ID,
+    isAvailable: true,
+    soundAlerts: true,
+    vibrationAlerts: true,
+};
 
 // ─── Order Details Modal ──────────────────────────────────────────────────
 function OrderModal({ order, onClose, onAccept, isAccepting }) {
@@ -194,12 +204,15 @@ export default function DriverDashboard() {
     const [acceptedOrders, setAcceptedOrders] = useState([]);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [isAccepting, setIsAccepting] = useState(false);
+    const [accessDenied, setAccessDenied] = useState(false);
     const [activeTab, setActiveTab] = useState("available"); // "available" | "mine"
     const [callActionsReady, setCallActionsReady] = useState({});
     const [callDetailsExpanded, setCallDetailsExpanded] = useState({});
     const [cancelModalOrder, setCancelModalOrder] = useState(null);
     const [cancelReason, setCancelReason] = useState(CANCEL_REASONS[0]);
     const callFlowStorageKey = user ? `yaslamo_driver_call_flow_${user.uid}` : null;
+    const settingsStorageKey = user ? `yaslamo_driver_settings_${user.uid}` : null;
+    const [driverSettings, setDriverSettings] = useState(DRIVER_SETTINGS_DEFAULT);
 
     useEffect(() => {
         if (!callFlowStorageKey) return;
@@ -239,6 +252,28 @@ export default function DriverDashboard() {
         }
     }, [callFlowStorageKey, callActionsReady, callDetailsExpanded]);
 
+    useEffect(() => {
+        if (!settingsStorageKey || !user) return;
+        try {
+            const raw = localStorage.getItem(settingsStorageKey);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                const merged = { ...DRIVER_SETTINGS_DEFAULT, ...parsed };
+                setDriverSettings(merged);
+                return;
+            }
+            const initialSettings = {
+                ...DRIVER_SETTINGS_DEFAULT,
+                name: user.displayName || "",
+                phone: user.phoneNumber || "",
+            };
+            setDriverSettings(initialSettings);
+            localStorage.setItem(settingsStorageKey, JSON.stringify(initialSettings));
+        } catch (err) {
+            console.error("read driver settings storage error:", err);
+        }
+    }, [settingsStorageKey, user]);
+
     // Restore auth state on page load
     useEffect(() => {
         document.body.classList.add("driver-app");
@@ -251,6 +286,24 @@ export default function DriverDashboard() {
             unsubscribe();
         };
     }, []);
+
+    useEffect(() => {
+        const verifyDriverRole = async () => {
+            if (!user) {
+                setAccessDenied(false);
+                return;
+            }
+            try {
+                const profileSnap = await getDoc(doc(db, "users", user.uid));
+                const role = profileSnap.exists() ? profileSnap.data()?.role : null;
+                setAccessDenied(role !== "driver");
+            } catch (err) {
+                console.error("driver role check error:", err);
+                setAccessDenied(true);
+            }
+        };
+        verifyDriverRole();
+    }, [user]);
 
     // Real-time listener: pending orders for this area
     useEffect(() => {
@@ -393,6 +446,22 @@ export default function DriverDashboard() {
     }
 
     if (!user) return <DriverLogin onLogin={setUser} />;
+    if (accessDenied) {
+        return (
+            <div className="driver-layout" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "24px" }}>
+                <div className="empty-state">
+                    <div style={{ fontWeight: 800, marginBottom: "8px" }}>غير مخول لدخول صفحة المندوب</div>
+                    <button
+                        className="order-details-btn"
+                        onClick={() => auth.signOut().then(() => setUser(null))}
+                        style={{ marginTop: "8px" }}
+                    >
+                        تسجيل خروج
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="driver-layout">
@@ -403,8 +472,20 @@ export default function DriverDashboard() {
                     </svg>
                     بوابة المندوبين
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    <div className="driver-status-badge">متصل</div>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <div className={`driver-status-badge ${driverSettings.isAvailable ? "" : "driver-status-badge--offline"}`}>
+                        {driverSettings.isAvailable ? "متاح" : "غير متاح"}
+                    </div>
+                    <Link
+                        href="/driver/settings"
+                        className="driver-settings-btn"
+                        aria-label="إعدادات المندوب"
+                        title="إعدادات المندوب"
+                    >
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+                            <path d="M19.14 12.94a7.96 7.96 0 0 0 .05-.94 7.96 7.96 0 0 0-.05-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.17 7.17 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.9 2h-3.8a.5.5 0 0 0-.49.42l-.36 2.54c-.58.22-1.13.53-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 8.48a.5.5 0 0 0 .12.64l2.03 1.58a7.96 7.96 0 0 0-.05.94c0 .32.02.63.05.94l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.6.22l2.39-.96c.5.4 1.05.72 1.63.94l.36 2.54c.04.24.25.42.49.42h3.8c.24 0 .45-.18.49-.42l.36-2.54c.58-.22 1.13-.53 1.63-.94l2.39.96c.22.09.47 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5z" />
+                        </svg>
+                    </Link>
                     <button
                         onClick={() => auth.signOut().then(() => setUser(null))}
                         className="driver-logout-btn"
@@ -825,6 +906,7 @@ export default function DriverDashboard() {
                     </div>
                 </div>
             )}
+
         </div>
     );
 }

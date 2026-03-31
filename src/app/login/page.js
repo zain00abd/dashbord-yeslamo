@@ -50,8 +50,13 @@ export default function Login() {
                 locationDesc: profile.locationDesc || "",
                 locationCoords: profile.locationCoords || null,
                 customerStatus: profile.customerStatus || null,
+                role: profile.role || "customer",
             }));
-            router.push("/");
+            if (profile.role === "driver") {
+                router.push("/driver");
+            } else {
+                router.push("/");
+            }
         } catch (err) {
             console.error(err);
             if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password") {
