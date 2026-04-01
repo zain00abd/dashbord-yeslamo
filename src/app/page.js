@@ -31,7 +31,7 @@ export default function Home() {
         <div style={{ position: "absolute", top: "-40px", right: "-40px", width: "180px", height: "180px", borderRadius: "50%", background: "rgba(255,255,255,0.07)", pointerEvents: "none" }} />
         <div style={{ position: "absolute", bottom: "10px", left: "-30px", width: "120px", height: "120px", borderRadius: "50%", background: "rgba(255,255,255,0.05)", pointerEvents: "none" }} />
 
-        <Image src="/logo1.jpg" alt="يسلمو" width={130} height={130} className="hero-logo" priority />
+        <Image src="/logo3.png" alt="يسلمو" width={130} height={130} className="hero-logo" priority />
         <h1 className="hero-title">توصيل كافة الطلبيات إلى المنازل</h1>
         <p className="hero-desc">نوصلك كل ما تحتاجه من متاجرك المفضلة إلى باب منزلك بسرعة وأمان</p>
 

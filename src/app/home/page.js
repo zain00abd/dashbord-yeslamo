@@ -361,7 +361,7 @@ export default function HomePage() {
                         </div>
                     </div>
                     <Link href="/" className="home-v2-brand">
-                        <Image src="/logo1.jpg" alt="يسلمو" width={48} height={48} className="home-v2-logo" priority />
+                        <Image src="/logo3.png" alt="يسلمو" width={48} height={48} className="home-v2-logo" priority />
                     </Link>
                 </div>
                 {deliveryLocation ? (

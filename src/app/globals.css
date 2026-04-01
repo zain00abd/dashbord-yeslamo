@@ -56,11 +56,15 @@ a {
   from {
     opacity: 0;
     transform: translateY(-20px);
+    /* transform: scale(1.5); */
+
   }
 
   to {
     opacity: 1;
     transform: translateY(0);
+    transform: scale(1.5);
+
   }
 }
 
@@ -190,6 +194,7 @@ a {
 }
 
 .hero-section::after {
+
   content: '';
   position: absolute;
   bottom: -1px;
@@ -205,9 +210,10 @@ a {
   height: clamp(80px, 20vw, 130px);
   border-radius: 22px;
   object-fit: cover;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  /* box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); */
   margin-bottom: 10px;
   animation: slideDown 0.8s ease-out;
+  transform: scale(1.5);
 }
 
 .hero-title {
@@ -1098,7 +1104,7 @@ a {
 
 /* Global: always add padding when bottom-nav is rendered into body */
 body:has(.bottom-nav) .page-wrapper,
-body:has(.bottom-nav) > div:not(.bottom-nav) {
+body:has(.bottom-nav)>div:not(.bottom-nav) {
   padding-bottom: 80px;
 }
 
@@ -1347,6 +1353,7 @@ body:has(.bottom-nav) > div:not(.bottom-nav) {
   .order-confirm-btn:hover {
     transform: none;
   }
+
   .order-confirm-btn:active {
     transform: scale(0.98);
   }
@@ -1381,8 +1388,7 @@ body:has(.bottom-nav) > div:not(.bottom-nav) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: max(10px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) 12px
-    max(18px, env(safe-area-inset-left));
+  padding: max(10px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) 12px max(18px, env(safe-area-inset-left));
   background: linear-gradient(155deg, #ff8f5c 0%, var(--primary) 42%, var(--primary-dark) 100%);
   border-radius: 0 0 22px 22px;
   /* تقليل الظل الملون لتفادي هالة/تدرج خارج حدود الهيدر */
@@ -1468,12 +1474,16 @@ body:has(.bottom-nav) > div:not(.bottom-nav) {
 }
 
 .home-v2-logo {
+  transform: scale(1.8);
+  position: relative;
+  top: 10px;
+  left: 10px;
   width: 48px;
   height: 48px;
   border-radius: 14px;
   object-fit: cover;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
-  border: 2px solid rgba(255, 255, 255, 0.45);
+  /* box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18); */
+  /* border: 2px solid rgba(255, 255, 255, 0.45); */
 }
 
 .home-v2-location {
@@ -2490,6 +2500,7 @@ body:has(.bottom-nav) > div:not(.bottom-nav) {
 
 /* Touch optimizations for home */
 @media (hover: none) and (pointer: coarse) {
+
   .home-action-card:hover,
   .home-feature-row:hover,
   .home-cta-btn:hover,

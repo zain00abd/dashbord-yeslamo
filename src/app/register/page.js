@@ -136,7 +136,7 @@ export default function Register() {
         <div className="page-wrapper">
             <div className="top-bar">
                 <Link href="/" className="top-bar-logo">
-                    <Image src="/logo1.jpg" alt="يسلمو" width={36} height={36} />
+                    <Image src="/logo3.jpg" alt="يسلمو" width={36} height={36} />
                     <span>{isEditing ? "تعديل الحساب" : "إنشاء حساب"}</span>
                 </Link>
                 <Link href="/" className="top-bar-back">← الرئيسية</Link>
