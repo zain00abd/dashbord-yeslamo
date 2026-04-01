@@ -1474,7 +1474,7 @@ body:has(.bottom-nav)>div:not(.bottom-nav) {
 }
 
 .home-v2-logo {
-  transform: scale(1.8);
+  transform: scale(1.5);
   position: relative;
   top: 10px;
   left: 10px;
