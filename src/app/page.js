@@ -35,16 +35,26 @@ export default function Home() {
         <h1 className="hero-title">توصيل كافة الطلبيات إلى المنازل</h1>
         <p className="hero-desc">نوصلك كل ما تحتاجه من متاجرك المفضلة إلى باب منزلك بسرعة وأمان</p>
 
-        <div style={{
-          display: "inline-flex", alignItems: "center", gap: "8px",
-          background: "rgba(255,255,255,0.18)", backdropFilter: "blur(10px)",
-          border: "1px solid rgba(255,255,255,0.3)", borderRadius: "50px",
-          padding: "8px 20px", marginTop: "18px",
-          color: "white", fontWeight: 700, fontSize: "0.9rem",
-          animation: "slideUp 0.8s ease-out 0.6s both",
-        }}>
-          🚀 توصيل سريع وآمن في منطقتك
-        </div>
+        <Link
+          href="/install"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            background: "rgba(255,255,255,0.18)",
+            backdropFilter: "blur(10px)",
+            border: "1px solid rgba(255,255,255,0.3)",
+            borderRadius: "50px",
+            padding: "8px 20px",
+            marginTop: "18px",
+            color: "white",
+            fontWeight: 700,
+            fontSize: "0.9rem",
+            animation: "slideUp 0.8s ease-out 0.6s both",
+          }}
+        >
+          📲 ثبّت التطبيق على جهازك
+        </Link>
       </div>
 
       {/* Stats removed */}
