@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { auth, db } from "@/lib/firebase";
 import { showAppAlert } from "@/lib/appAlert";
 import { doc, getDoc } from "firebase/firestore";
@@ -25,6 +26,8 @@ export default function DriverSettingsPage() {
     const [roleChecked, setRoleChecked] = useState(false);
     const [settings, setSettings] = useState(DRIVER_SETTINGS_DEFAULT);
     const [isSaving, setIsSaving] = useState(false);
+    const [installPrompt, setInstallPrompt] = useState(null);
+    const [isInstalled, setIsInstalled] = useState(false);
 
     const settingsStorageKey = user ? `yaslamo_driver_settings_${user.uid}` : null;
 
@@ -88,6 +91,29 @@ export default function DriverSettingsPage() {
         loadSettings();
     }, [user, settingsStorageKey]);
 
+    useEffect(() => {
+        const standaloneMatch = window.matchMedia("(display-mode: standalone)").matches;
+        const iosStandalone = window.navigator.standalone === true;
+        if (standaloneMatch || iosStandalone) setIsInstalled(true);
+
+        function onBeforeInstallPrompt(e) {
+            e.preventDefault();
+            setInstallPrompt(e);
+        }
+
+        function onInstalled() {
+            setIsInstalled(true);
+            setInstallPrompt(null);
+        }
+
+        window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+        window.addEventListener("appinstalled", onInstalled);
+        return () => {
+            window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+            window.removeEventListener("appinstalled", onInstalled);
+        };
+    }, []);
+
     const saveSettings = useCallback(() => {
         if (!settingsStorageKey) return;
         setIsSaving(true);
@@ -109,6 +135,15 @@ export default function DriverSettingsPage() {
             setIsSaving(false);
         }
     }, [settings, settingsStorageKey]);
+
+    async function handleInstallApp() {
+        if (!installPrompt || isInstalled) return;
+        installPrompt.prompt();
+        const choice = await installPrompt.userChoice;
+        if (choice?.outcome === "accepted") {
+            setInstallPrompt(null);
+        }
+    }
 
     if (!authChecked) {
         return (
@@ -220,6 +255,49 @@ export default function DriverSettingsPage() {
                             {isSaving ? "جاري الحفظ..." : "حفظ الإعدادات"}
                         </button>
                     </div>
+                </div>
+
+                <div className="section-heading" style={{ marginTop: "16px" }}>تطبيق المندوب</div>
+                <div className="accepted-card" style={{ padding: "14px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
+                        <Image
+                            src="/logo5.png"
+                            alt="يسلمو Driver"
+                            width={46}
+                            height={46}
+                            style={{ borderRadius: "10px", objectFit: "cover", border: "1px solid var(--driver-border)" }}
+                        />
+                        <div>
+                            <div style={{ fontWeight: 900, color: "var(--driver-text)" }}>تثبيت تطبيق المندوب</div>
+                            <div style={{ fontSize: "0.84rem", color: "var(--driver-text-muted)", fontWeight: 600 }}>
+                                افتح التطبيق كشاشة مستقلة للوصول السريع.
+                            </div>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={handleInstallApp}
+                        disabled={!installPrompt || isInstalled}
+                        style={{
+                            width: "100%",
+                            padding: "12px",
+                            borderRadius: "10px",
+                            border: "none",
+                            background: !installPrompt || isInstalled ? "rgba(148, 163, 184, 0.35)" : "var(--driver-primary)",
+                            color: "white",
+                            fontFamily: "inherit",
+                            fontWeight: 800,
+                            cursor: !installPrompt || isInstalled ? "not-allowed" : "pointer",
+                        }}
+                    >
+                        {isInstalled ? "✅ التطبيق مثبت بالفعل" : "📲 تثبيت التطبيق"}
+                    </button>
+
+                    {!isInstalled && !installPrompt && (
+                        <div style={{ marginTop: "8px", fontSize: "0.8rem", color: "var(--driver-text-muted)", fontWeight: 600 }}>
+                            على iPhone: Safari ← زر المشاركة ← Add to Home Screen
+                        </div>
+                    )}
                 </div>
             </main>
         </div>
