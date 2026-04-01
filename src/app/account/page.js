@@ -3,11 +3,13 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
+import { showAppConfirm } from "@/lib/appConfirm";
 
 export default function AccountPage() {
     const [user, setUser] = useState(null);
     const [loaded, setLoaded] = useState(false);
+    const [installPrompt, setInstallPrompt] = useState(null);
+    const [isInstalled, setIsInstalled] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -19,11 +21,43 @@ export default function AccountPage() {
         setLoaded(true);
     }, []);
 
-    function handleLogout() {
-        if (confirm("هل تريد تسجيل الخروج؟")) {
-            localStorage.removeItem("yaslamo_user");
-            window.dispatchEvent(new Event("yaslamo_auth"));
-            router.replace("/login");
+    useEffect(() => {
+        const standaloneMatch = window.matchMedia("(display-mode: standalone)").matches;
+        const iosStandalone = window.navigator.standalone === true;
+        if (standaloneMatch || iosStandalone) setIsInstalled(true);
+
+        function onBeforeInstallPrompt(e) {
+            e.preventDefault();
+            setInstallPrompt(e);
+        }
+
+        function onInstalled() {
+            setIsInstalled(true);
+            setInstallPrompt(null);
+        }
+
+        window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+        window.addEventListener("appinstalled", onInstalled);
+        return () => {
+            window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+            window.removeEventListener("appinstalled", onInstalled);
+        };
+    }, []);
+
+    async function handleLogout() {
+        const ok = await showAppConfirm("هل تريد تسجيل الخروج؟");
+        if (!ok) return;
+        localStorage.removeItem("yaslamo_user");
+        window.dispatchEvent(new Event("yaslamo_auth"));
+        router.replace("/login");
+    }
+
+    async function handleInstall() {
+        if (!installPrompt || isInstalled) return;
+        installPrompt.prompt();
+        const choice = await installPrompt.userChoice;
+        if (choice?.outcome === "accepted") {
+            setInstallPrompt(null);
         }
     }
 
@@ -107,7 +141,7 @@ export default function AccountPage() {
                         <Link key={i} href={action.href} style={{
                             display: "flex", alignItems: "center", justifyContent: "space-between",
                             padding: "16px 20px", textDecoration: "none",
-                            borderBottom: i < actions.length - 1 ? "1px solid #f9f9f9" : "none",
+                            borderBottom: "1px solid #f9f9f9",
                         }}>
                             <span style={{ fontWeight: 700, color: "#1a1a2e", fontSize: "0.95rem" }}>
                                 {action.icon} {action.label}
@@ -117,6 +151,29 @@ export default function AccountPage() {
                             </svg>
                         </Link>
                     ))}
+                    <button
+                        onClick={handleInstall}
+                        disabled={!installPrompt || isInstalled}
+                        style={{
+                            width: "100%",
+                            border: "none",
+                            background: "white",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "16px 20px",
+                            cursor: !installPrompt || isInstalled ? "not-allowed" : "pointer",
+                            opacity: !installPrompt || isInstalled ? 0.55 : 1,
+                            fontFamily: "inherit",
+                        }}
+                    >
+                        <span style={{ fontWeight: 700, color: "#1a1a2e", fontSize: "0.95rem" }}>
+                            📲 {isInstalled ? "التطبيق مثبت بالفعل" : "تثبيت التطبيق"}
+                        </span>
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="#0f766e">
+                            <path d="M5 20h14v-2H5v2zm7-18l-5.5 5.5 1.42 1.42L11 6.84V16h2V6.84l3.08 3.08 1.42-1.42L12 2z" />
+                        </svg>
+                    </button>
                 </div>
 
                 {/* Legal */}

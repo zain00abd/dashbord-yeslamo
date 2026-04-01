@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/firebase";
+import { showAppAlert } from "@/lib/appAlert";
+import { showAppConfirm } from "@/lib/appConfirm";
 import { doc, onSnapshot, updateDoc } from "firebase/firestore";
 
 // Status config — order from RIGHT to LEFT in the stepper (RTL)
@@ -112,13 +114,14 @@ export default function MyOrderPage() {
 
     async function handleCancel() {
         if (!order?.id) return;
-        if (!confirm("هل أنت متأكد من إلغاء الطلب؟")) return;
+        const ok = await showAppConfirm("هل أنت متأكد من إلغاء الطلب؟");
+        if (!ok) return;
         setCancelling(true);
         try {
             await updateDoc(doc(db, "orders", order.id), { status: "cancelled" });
             setOrder((prev) => ({ ...prev, status: "cancelled" }));
         } catch (e) {
-            alert("حدث خطأ أثناء إلغاء الطلب");
+            showAppAlert("حدث خطأ أثناء إلغاء الطلب");
         } finally {
             setCancelling(false);
         }

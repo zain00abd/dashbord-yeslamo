@@ -1,6 +1,7 @@
 import "./globals.css";
 import BottomNav from "./components/BottomNav";
 import PwaRegister from "./components/PwaRegister";
+import AppAlertHost from "./components/AppAlertHost";
 
 export const metadata = {
   title: "يسلمو - توصيل الطلبات",
@@ -38,6 +39,7 @@ export default function RootLayout({ children }) {
       </head>
       <body suppressHydrationWarning>
         <PwaRegister />
+        <AppAlertHost />
         {children}
         <BottomNav />
       </body>

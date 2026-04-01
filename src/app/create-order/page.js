@@ -5,7 +5,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { db } from "@/lib/firebase";
+import { showAppAlert } from "@/lib/appAlert";
+import { showAppConfirm } from "@/lib/appConfirm";
 import { doc, onSnapshot, collection, query, where, limit, getDocs, updateDoc } from "firebase/firestore";
+
+const CITY_OPTIONS = ["عربين", "زملكا", "حرستا", "حمورية"];
 
 function CreateOrderContent() {
     const [userName, setUserName] = useState("");
@@ -166,11 +170,11 @@ function CreateOrderContent() {
     const [submitError, setSubmitError] = useState("");
 
     function handleConfirmClick() {
-        if (!userName.trim()) { alert("الرجاء تسجيل الدخول أولاً أو إنشاء حساب"); return; }
+        if (!userName.trim()) { showAppAlert("الرجاء تسجيل الدخول أولاً أو إنشاء حساب"); return; }
         if (!isCallMode) {
-            if (!orders.trim()) { alert("الرجاء إدخال الطلبات المطلوبة"); return; }
+            if (!orders.trim()) { showAppAlert("الرجاء إدخال الطلبات المطلوبة"); return; }
             const items = parseOrders(orders);
-            if (items.length === 0) { alert("الرجاء إدخال صنف واحد على الأقل"); return; }
+            if (items.length === 0) { showAppAlert("الرجاء إدخال صنف واحد على الأقل"); return; }
         }
         setSubmitError("");
         setShowConfirmModal(true);
@@ -229,15 +233,16 @@ function CreateOrderContent() {
         }
     }
 
-    function clearForm() {
-        if (confirm("هل أنت متأكد من تفريغ جميع الحقول؟")) {
-            setOrders("");
-        }
+    async function clearForm() {
+        const ok = await showAppConfirm("هل أنت متأكد من تفريغ جميع الحقول؟");
+        if (!ok) return;
+        setOrders("");
     }
 
     async function cancelOrder() {
         if (!orderId) return;
-        if (!confirm("هل أنت متأكد من إلغاء الطلب؟")) return;
+        const ok = await showAppConfirm("هل أنت متأكد من إلغاء الطلب؟");
+        if (!ok) return;
         try {
             await updateDoc(doc(db, "orders", orderId), { status: "cancelled" });
             setTrackingStatus("idle");
@@ -245,10 +250,10 @@ function CreateOrderContent() {
             setOrderId("");
             setOrderItems([]);
             if (unsubscribeRef.current) unsubscribeRef.current();
-            alert("تم إلغاء الطلب بنجاح");
+            showAppAlert("تم إلغاء الطلب بنجاح");
         } catch (err) {
             console.error("Cancel error:", err);
-            alert("حدث خطأ أثناء إلغاء الطلب");
+            showAppAlert("حدث خطأ أثناء إلغاء الطلب");
         }
     }
 
@@ -531,14 +536,17 @@ function CreateOrderContent() {
 
                         {modalGpsDone && (
                             <>
-                                <input
-                                    type="text"
+                                <select
                                     className="form-input"
-                                    placeholder="المدينة"
                                     value={modalCity}
                                     onChange={(e) => setModalCity(e.target.value)}
                                     style={{ marginBottom: "12px" }}
-                                />
+                                >
+                                    <option value="" disabled>اختر المدينة</option>
+                                    {CITY_OPTIONS.map((c) => (
+                                        <option key={c} value={c}>{c}</option>
+                                    ))}
+                                </select>
                                 <textarea
                                     className="form-input"
                                     style={{ minHeight: "80px", resize: "vertical" }}

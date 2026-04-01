@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 
+const CITY_OPTIONS = ["عربين", "زملكا", "حرستا", "حمورية"];
+
 export default function Register() {
     const router = useRouter();
     const [name, setName] = useState("");
@@ -249,14 +251,17 @@ export default function Register() {
                         {/* Step 2: address fields — shown only after GPS */}
                         {gpsDone && (
                             <>
-                                <input
-                                    type="text"
+                                <select
                                     className="form-input"
-                                    placeholder="المدينة"
                                     value={city}
                                     onChange={(e) => setCity(e.target.value)}
                                     style={{ marginBottom: "12px" }}
-                                />
+                                >
+                                    <option value="" disabled>اختر المدينة</option>
+                                    {CITY_OPTIONS.map((c) => (
+                                        <option key={c} value={c}>{c}</option>
+                                    ))}
+                                </select>
                                 <textarea
                                     className="form-input"
                                     style={{ minHeight: "80px", resize: "vertical" }}

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { auth, db } from "@/lib/firebase";
+import { showAppAlert } from "@/lib/appAlert";
 import { doc, getDoc } from "firebase/firestore";
 import "../driver.css";
 
@@ -100,10 +101,10 @@ export default function DriverSettingsPage() {
             };
             setSettings(clean);
             localStorage.setItem(settingsStorageKey, JSON.stringify(clean));
-            alert("تم حفظ الإعدادات بنجاح");
+            showAppAlert("تم حفظ الإعدادات بنجاح");
         } catch (err) {
             console.error("save local driver settings error:", err);
-            alert("تعذر حفظ الإعدادات");
+            showAppAlert("تعذر حفظ الإعدادات");
         } finally {
             setIsSaving(false);
         }

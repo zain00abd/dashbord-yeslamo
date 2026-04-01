@@ -16,6 +16,8 @@ import {
     serverTimestamp,
 } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
+import { showAppAlert } from "@/lib/appAlert";
+import { showAppConfirm } from "@/lib/appConfirm";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import SwipeToAccept from "./SwipeToAccept";
 import "./driver.css";
@@ -360,7 +362,7 @@ export default function DriverDashboard() {
 
                 if (!orderDoc.exists()) throw new Error("الطلب غير موجود");
                 if (orderDoc.data().status !== "pending") {
-                    throw new Error("عذراً، قام مندوب آخر بقبول هذا الطلب");
+                    throw new Error(" عذراً، قام مندوب آخر بقبول هذا الطلب أو تم إلغاء الطلب من قبل الزبون ");
                 }
 
                 transaction.update(orderRef, {
@@ -374,7 +376,7 @@ export default function DriverDashboard() {
             // The onSnapshot listener will automatically remove the order from the list
         } catch (err) {
             console.error("Accept order error:", err);
-            alert(err.message || "حدث خطأ في قبول الطلب");
+            showAppAlert(err.message || "حدث خطأ في قبول الطلب");
         } finally {
             setIsAccepting(false);
         }
@@ -396,27 +398,29 @@ export default function DriverDashboard() {
                 if (!snap.empty) await updateDoc(snap.docs[0].ref, { customerStatus: action });
             }
 
-            alert(action === "verified" ? "✅ تم توثيق الزبون" : "🚫 تم الإبلاغ عن الزبون");
+            showAppAlert(action === "verified" ? "✅ تم توثيق الزبون" : "🚫 تم الإبلاغ عن الزبون");
         } catch (err) {
             console.error("verify error:", err);
-            alert("حدث خطأ");
+            showAppAlert("حدث خطأ");
         }
     }, []);
 
     // ── Update order status (on_the_way / delivered) ───────────────────────
     const handleUpdateStatus = useCallback(async (orderId, newStatus) => {
         const msg = newStatus === "on_the_way" ? "تحويل حالة الطلب إلى 'في الطريق'؟" : "هل أنت متأكد من تسليم الطلب للزبون بنجاح؟";
-        if (!confirm(msg)) return;
+        showAppConfirm(msg).then(async (ok) => {
+            if (!ok) return;
 
-        try {
-            await updateDoc(doc(db, "orders", orderId), {
-                status: newStatus,
-                updatedAt: serverTimestamp(),
-            });
-        } catch (err) {
-            console.error("status update error:", err);
-            alert("حدث خطأ أثناء تحديث حالة الطلب");
-        }
+            try {
+                await updateDoc(doc(db, "orders", orderId), {
+                    status: newStatus,
+                    updatedAt: serverTimestamp(),
+                });
+            } catch (err) {
+                console.error("status update error:", err);
+                showAppAlert("حدث خطأ أثناء تحديث حالة الطلب");
+            }
+        });
     }, []);
 
     const handleCancelOrder = useCallback(async () => {
@@ -432,7 +436,7 @@ export default function DriverDashboard() {
             setCancelReason(CANCEL_REASONS[0]);
         } catch (err) {
             console.error("cancel order error:", err);
-            alert("حدث خطأ أثناء إلغاء الطلب");
+            showAppAlert("حدث خطأ أثناء إلغاء الطلب");
         }
     }, [cancelModalOrder, cancelReason]);
 
